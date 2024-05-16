@@ -1,9 +1,7 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head } from '@inertiajs/vue3';
-import Test from "@/Components/Test.vue";
-
-
+import StatTable from "@/Components/StatTable.vue";
 </script>
 
 <template>
@@ -21,6 +19,6 @@ import Test from "@/Components/Test.vue";
                 </div>
             </div>
         </div>
-        <Test />
+        <StatTable />
     </AuthenticatedLayout>
 </template>

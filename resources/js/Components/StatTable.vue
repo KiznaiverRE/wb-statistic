@@ -1,3 +1,20 @@
+<style>
+label.label {
+    width: 100%;
+    height: 100%;
+    display: block;
+    cursor: pointer;
+}
+
+input#excelInput {
+    width: 0;
+    height: 0;
+    opacity: 0;
+    pointer-events: none;
+    user-select: none;
+}
+</style>
+
 <template>
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
@@ -5,8 +22,12 @@
                 <div class="p-6 pb-0 font-semibold text-gray-900">Загрузить отчёт</div>
 
                 <div class="file-drag-drop">
-                    <form ref="fileform">
-                        <span class="drop-files">Drop the files here!</span>
+                    <form id="fileform" ref="fileform">
+
+                        <label class="label">
+                            <span class="drop-files">Выбрать файл</span>
+                            <input id="excelInput" type="file" name="excel" form="fileform">
+                        </label>
                     </form>
                 </div>
                 <div class="p-6 pb-0 font-semibold text-gray-900">Отчёты</div>
