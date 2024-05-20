@@ -61,7 +61,7 @@ table td{
                     </label>
                 </div>
 
-                <div v-if="parsedData && parsedData.length > 0">
+                <div style="overflow-x: scroll;" v-if="parsedData && parsedData.length > 0">
                     <div class="p-6 pb-0 font-semibold text-gray-900">Отчёты</div>
                     <table class="table-block">
                         <thead>
@@ -102,8 +102,8 @@ export default {
                 const sheetName = workbook.SheetNames[0];
                 const sheet = workbook.Sheets[sheetName];
 
-                const headers = utils.sheet_to_json(sheet, { header: 1 })[0];
-                const parsedData = utils.sheet_to_json(sheet, { header: 1, raw: false });
+                // Получаем заголовки из первой строки
+                const headers = utils.sheet_to_json(sheet)[0];
 
                 // Преобразуем все элементы первой строки в строки
                 for (let i = 0; i < headers.length; i++) {
@@ -112,10 +112,13 @@ export default {
                     }
                 }
 
-                // Обрабатываем формулы
-                // this.calculateFormulas(parsedData);
+                // Преобразуем остальные строки в объекты с ключами из заголовков
+                const parsedData = utils.sheet_to_json(sheet, { header: headers, raw: false, defval: "" });
+
+                console.log(parsedData);
 
                 this.parsedData = parsedData;
+                this.saveData(parsedData);
             };
 
             reader.readAsArrayBuffer(file);
@@ -135,6 +138,15 @@ export default {
                     }
                 }
             }
+        },
+        saveData(data) {
+            axios.post('upload-excel', data)
+            .then(response => {
+                console.log('Данные успешно отправлены:', response.data);
+            })
+            .catch(error => {
+                console.error('Произошла ошибка при отправке данных:', error);
+            });
         }
     }
 };
