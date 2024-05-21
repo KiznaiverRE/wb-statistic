@@ -8,43 +8,96 @@ use App\Models\WbArticle;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Maatwebsite\Excel\Facades\Excel;
+use Maatwebsite\Excel\HeadingRowImport;
+use PhpOffice\PhpSpreadsheet\IOFactory;
+use PhpOffice\PhpSpreadsheet\Exception as SpreadsheetException;
+
 
 class ProductController extends Controller
 {
     // Метод для обработки данных из Excel и сохранения товара
     public function uploadExcelData(Request $request)
     {
+        try {
+            // Проверка наличия файла
+            if (!$request->hasFile('file')) {
+                return response()->json(['error' => 'No file uploaded'], 400);
+            }
 
-        $data = $this->sortData($request);
+            // Получение загруженного файла
+            $file = $request->file('file');
+            $extension = $file->getClientOriginalExtension();
 
-        // Создание нового товара
-//        $product = Product::create([
-//            'name' => $data['name'],
-//        ]);
-//
-//        // Создание нового артикула WbArticle
-//        $wbArticle = WbArticle::create([
-//            'product_id' => $product->id,
-//            'article' => $data['article'],
-//        ]);
-//
-//        // Создание новых цен CostPrice
-//        foreach ($data['prices'] as $priceData) {
-//            CostPrice::create([
-//                'product_id' => $product->id,
-//                'price' => $priceData['price'],
-//                'date' => strtotime($priceData['date']), // Преобразование даты в формат временной метки
-//            ]);
-//        }
+            $data = [
+                'headers' => [],
+                'rows' => []
+            ];
 
-        // Отправить успешный ответ
-        return response()->json(['message' => 'Data imported successfully'], 200);
+            // Обработка файлов
+            if (in_array($extension, ['xlsx', 'xls', 'csv'])) {
+                // Сохранение файла во временную директорию
+                $filePath = $file->store('temp');
+
+                // Преобразование содержимого файла в UTF-8
+                $content = file_get_contents(storage_path('app/' . $filePath));
+                $utf8Content = mb_convert_encoding($content, 'UTF-8', 'UTF-16');
+
+                // Сохранение преобразованного содержимого во временный файл
+                $utf8FilePath = storage_path('app/temp/converted_' . $file->getClientOriginalName());
+                file_put_contents($utf8FilePath, $utf8Content);
+
+                // Создание экземпляра объекта PhpSpreadsheet
+                $reader = IOFactory::createReaderForFile($utf8FilePath);
+                $reader->setReadDataOnly(true);
+
+                // Получение данных
+                $spreadsheet = $reader->load($utf8FilePath);
+                $worksheet = $spreadsheet->getActiveSheet();
+
+                // Получение заголовков
+                $headings = $worksheet->toArray()[0];
+                $data['headers'] = $headings;
+
+                Log::info($data['headers']);
+
+                // Получение данных
+                $rows = $worksheet->toArray();
+                array_shift($rows); // Удаление первой строки, так как это заголовки
+                $data['rows'] = $rows;
+
+                // Обработка данных: удаление управляющих символов и пробелов
+                array_walk_recursive($data['rows'], function (&$item) {
+                    if (is_string($item)) {
+                        $item = trim(preg_replace('/[\x00-\x1F\x7F-\x9F]/u', '', $item));
+                    }
+                });
+
+                // Удаление временного файла
+                unlink($utf8FilePath);
+            } else {
+                return response()->json(['error' => 'Invalid file type. Only xlsx, xls, and csv files are allowed.'], 400);
+            }
+
+            return response()->json($data);
+
+        } catch (\PhpOffice\PhpSpreadsheet\Exception $e) {
+            Log::error('Spreadsheet error: ' . $e->getMessage());
+            return response()->json(['error' => 'Failed to process the spreadsheet file.'], 500);
+        } catch (\Exception $e) {
+            Log::error('General error: ' . $e->getMessage());
+            return response()->json(['error' => 'An unexpected error occurred.'], 500);
+        }
     }
 
+    public function parseExcelData($file){
+
+
+//        return $data;
+    }
 
     public function getExcelData(){
         $user = Auth::user();
-
 
     }
 
