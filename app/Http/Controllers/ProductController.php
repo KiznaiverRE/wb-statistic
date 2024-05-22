@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\CostPrice;
 use App\Models\Product;
+use App\Models\ProductCategory;
 use App\Models\WbArticle;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -88,6 +89,49 @@ class ProductController extends Controller
             Log::error('General error: ' . $e->getMessage());
             return response()->json(['error' => 'An unexpected error occurred.'], 500);
         }
+    }
+
+    public function saveExcelData(Request $request){
+        $data = $request->all();
+
+        Log::info($data);
+
+        foreach ($data as $key => $item){
+            if (isset($item[2]) && !empty($item[2])){
+                $category = ProductCategory::create([
+                    'title' => $item[2], // Используем индекс 2 для имени категории
+                ]);
+            }
+
+
+            // Создание нового продукта
+            $product = Product::create([
+                'title' => $item[3], // Используем индекс 3 для имени продукта
+                'sellers_article' => (int)$item[0], // Используем индекс 0 для артикула продавца
+                'category_id' => (int)$category->id, // Используем id созданной категории
+            ]);
+
+            if (isset($item[1]) && !empty($item[1])){
+                // Создание нового артикула WbArticle
+                $wbArticle = WbArticle::create([
+                    'product_id' => (int)$product->id,
+                    'article' => (int)$item[1], // Используем индекс 1 для артикула WbArticle
+                ]);
+            }
+
+
+            // Создание новых цен CostPrice
+            for ($i = 4; $i < count($item); $i++) { // Начинаем со 4 индекса, так как 0, 1, 2, 3 уже использованы
+                CostPrice::create([
+                    'product_id' => (int)$product->id,
+                    'price' => (int)$item[$i], // Используем текущий индекс для цены
+                    'date' => strtotime($item[$i]), // Преобразование даты в формат временной метки (если это дата)
+                ]);
+            }
+        }
+
+        return response()->json(['message' => 'Данные сохранены.']);
+
     }
 
     public function parseExcelData($file){

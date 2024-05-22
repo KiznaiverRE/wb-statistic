@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\CostPrice;
 use App\Models\WbArticle;
+use App\Models\SellerArticle;
 
 class Product extends Model
 {
@@ -24,6 +25,11 @@ class Product extends Model
     public function wbArticles()
     {
         return $this->hasOne(WbArticle::class);
+    }
+
+    public function sellerArticles()
+    {
+        return $this->hasOne(SellerArticle::class);
     }
 
     public function category()
