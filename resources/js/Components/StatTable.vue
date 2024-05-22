@@ -46,6 +46,26 @@ table td{
     border: 1px solid #ccc;
     padding: 5px;
 }
+.scroll-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.scrollbar-top {
+    overflow-x: scroll;
+    height: 16px; /* Высота полосы прокрутки */
+    margin-bottom: -16px; /* Сдвиг вниз, чтобы наложить на таблицу */
+}
+
+.table-wrapper {
+    overflow-x: scroll;
+    overflow-y: hidden;
+    width: 100%;
+}
+
+.table-wrapper table {
+    width: 100%;
+}
 </style>
 
 <template>
@@ -61,20 +81,33 @@ table td{
                     </label>
                 </div>
 
-                <div v-if="parsedData && parsedData.length > 0">
-                    <div class="p-6 pb-0 font-semibold text-gray-900">Отчёты</div>
-                    <table class="table-block">
-                        <thead>
-                        <tr>
-                            <th v-for="(value, key) in parsedData[0]" :key="key">{{ key }}</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        <tr v-for="(row, index) in parsedData" :key="index">
-                            <td v-for="(value, key) in row" :key="key">{{ value }}</td>
-                        </tr>
-                        </tbody>
-                    </table>
+                <div class="flex flex-col p-5" v-if="rows && rows.length > 0">
+                    <div class="font-semibold text-gray-900 mb-5 font-bold">Отчёты</div>
+                    <div class="-my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
+                        <div class="py-2 align-middle inline-block min-w-full sm:px-6 lg:px-8">
+                            <button @click="saveData" type="button" class="mb-5 inline-block items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                Сохранить
+                            </button>
+                            <div class="scroll-wrapper">
+                                <div class="scrollbar-top" id="scrollbar-top"></div>
+                            <div id="table-wrapper" class="table-wrapper shadow overflow-hidden border-b border-gray-200 sm:rounded-lg">
+                                <table class="min-w-full divide-y divide-gray-200">
+                                    <thead class="bg-gray-50">
+                                    <tr>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" v-for="(header, index) in headers" :key="index">{{ header }}</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody class="bg-white divide-y divide-gray-200">
+                                        <tr v-for="(row, rowIndex) in rows" :key="rowIndex">
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" v-for="(cell, cellIndex) in row" :key="cellIndex">{{ cell }}</td>
+                                        </tr>
+                                    <!-- More people... -->
+                                    </tbody>
+                                </table>
+                            </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -84,41 +117,46 @@ table td{
 
 <script>
 import { read, utils } from 'xlsx';
+import ExcelJS from 'exceljs';
 
 export default {
     data() {
         return {
-            parsedData: null
+            parsedData: null,
+            rows: [],
+            headers: []
         };
     },
     methods: {
-        handleFileUpload(event) {
+        async handleFileUpload(event) {
             const file = event.target.files[0];
-            const reader = new FileReader();
+            console.log(file);
+            const formData = new FormData();
+            formData.append('file', file);
 
-            reader.onload = (e) => {
-                const data = new Uint8Array(e.target.result);
-                const workbook = read(data, { type: 'array' });
-                const sheetName = workbook.SheetNames[0];
-                const sheet = workbook.Sheets[sheetName];
-
-                const headers = utils.sheet_to_json(sheet, { header: 1 })[0];
-                const parsedData = utils.sheet_to_json(sheet, { header: 1, raw: false });
-
-                // Преобразуем все элементы первой строки в строки
-                for (let i = 0; i < headers.length; i++) {
-                    if (typeof headers[i] !== 'string') {
-                        headers[i] = headers[i].toString();
+            try {
+                const response = await axios.post('/upload-excel', formData, {
+                    headers: {
+                        'Content-Type': 'multipart/form-data'
                     }
-                }
-
-                // Обрабатываем формулы
-                // this.calculateFormulas(parsedData);
-
-                this.parsedData = parsedData;
-            };
-
-            reader.readAsArrayBuffer(file);
+                });
+                const { headers, rows } = response.data;
+                this.headers = headers;
+                this.rows = rows;
+            } catch (error) {
+                console.error('Error uploading file:', error);
+            }
+        },
+        async saveData() {
+            try {
+                const response = await axios.post('upload-excel', {
+                    headers: this.headers,
+                    rows: this.rows
+                });
+                console.log('Data saved successfully:', response.data);
+            } catch (error) {
+                console.error('Error saving data:', error);
+            }
         },
         calculateFormulas(data) {
             for (let i = 1; i < data.length; i++) {
@@ -135,7 +173,22 @@ export default {
                     }
                 }
             }
-        }
+        },
     }
 };
+document.addEventListener('DOMContentLoaded', function () {
+    const topScrollbar = document.getElementById('scrollbar-top');
+    const tableWrapper = document.getElementById('table-wrapper');
+
+    topScrollbar.addEventListener('scroll', function () {
+        tableWrapper.scrollLeft = topScrollbar.scrollLeft;
+    });
+
+    tableWrapper.addEventListener('scroll', function () {
+        topScrollbar.scrollLeft = tableWrapper.scrollLeft;
+    });
+
+    // Создание искусственной полосы прокрутки для верхнего элемента
+    topScrollbar.style.width = tableWrapper.scrollWidth + 'px';
+});
 </script>
