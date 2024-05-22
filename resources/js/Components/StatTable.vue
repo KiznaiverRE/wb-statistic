@@ -176,19 +176,19 @@ export default {
         },
     }
 };
-document.addEventListener('DOMContentLoaded', function () {
-    const topScrollbar = document.getElementById('scrollbar-top');
-    const tableWrapper = document.getElementById('table-wrapper');
-
-    topScrollbar.addEventListener('scroll', function () {
-        tableWrapper.scrollLeft = topScrollbar.scrollLeft;
-    });
-
-    tableWrapper.addEventListener('scroll', function () {
-        topScrollbar.scrollLeft = tableWrapper.scrollLeft;
-    });
-
-    // Создание искусственной полосы прокрутки для верхнего элемента
-    topScrollbar.style.width = tableWrapper.scrollWidth + 'px';
-});
+// document.addEventListener('DOMContentLoaded', function () {
+//     const topScrollbar = document.getElementById('scrollbar-top');
+//     const tableWrapper = document.getElementById('table-wrapper');
+//
+//     topScrollbar.addEventListener('scroll', function () {
+//         tableWrapper.scrollLeft = topScrollbar.scrollLeft;
+//     });
+//
+//     tableWrapper.addEventListener('scroll', function () {
+//         topScrollbar.scrollLeft = tableWrapper.scrollLeft;
+//     });
+//
+//     // Создание искусственной полосы прокрутки для верхнего элемента
+//     topScrollbar.style.width = tableWrapper.scrollWidth + 'px';
+// });
 </script>
