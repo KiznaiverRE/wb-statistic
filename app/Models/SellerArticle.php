@@ -9,8 +9,6 @@ class SellerArticle extends Model
 {
     use HasFactory;
 
-    use HasFactory;
-
     protected $fillable = [
         'product_id', 'article', // добавьте сюда все необходимые поля
     ];

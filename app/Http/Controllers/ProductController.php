@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\CostPrice;
 use App\Models\Product;
 use App\Models\ProductCategory;
+use App\Models\SellerArticle;
 use App\Models\WbArticle;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -94,20 +95,23 @@ class ProductController extends Controller
     public function saveExcelData(Request $request){
         $data = $request->all();
 
-        Log::info($data);
+        Log::info($data['rows']);
 
-        foreach ($data as $key => $item){
+
+        foreach ($data['rows'] as $key => $item){
             if (isset($item[2]) && !empty($item[2])){
-                $category = ProductCategory::create([
+                $category = ProductCategory::firstOrCreate([
                     'title' => $item[2], // Используем индекс 2 для имени категории
                 ]);
             }
 
+            Log::info($item);
+            Log::info($item[2]);
 
             // Создание нового продукта
             $product = Product::create([
                 'title' => $item[3], // Используем индекс 3 для имени продукта
-                'sellers_article' => (int)$item[0], // Используем индекс 0 для артикула продавца
+                'sellers_article' => (int)$item[0]?:NULL, // Используем индекс 0 для артикула продавца
                 'category_id' => (int)$category->id, // Используем id созданной категории
             ]);
 
@@ -115,7 +119,15 @@ class ProductController extends Controller
                 // Создание нового артикула WbArticle
                 $wbArticle = WbArticle::create([
                     'product_id' => (int)$product->id,
-                    'article' => (int)$item[1], // Используем индекс 1 для артикула WbArticle
+                    'article' => $item[1]?:NULL, // Используем индекс 1 для артикула WbArticle
+                ]);
+            }
+
+            if (isset($item[0]) && !empty($item[0])){
+                // Создание нового артикула sellerArticle
+                $sellerArticle = SellerArticle::create([
+                    'product_id' => (int)$product->id,
+                    'article' => (int)$item[0]?:NULL,
                 ]);
             }
 
@@ -131,17 +143,11 @@ class ProductController extends Controller
         }
 
         return response()->json(['message' => 'Данные сохранены.']);
-
-    }
-
-    public function parseExcelData($file){
-
-
-//        return $data;
     }
 
     public function getExcelData(){
         $user = Auth::user();
+
 
     }
 
