@@ -37,7 +37,8 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     Route::get('/excel-data', [ProductController::class, 'getExcelData'])->name('excel.data.get');
-    Route::post('upload-excel', [ProductController::class, 'uploadExcelData'])->name('excel.data.upload');
+    Route::post('/upload-excel', [ProductController::class, 'uploadExcelData'])->name('excel.data.upload');
+    Route::post('/save-excel', [ProductController::class, 'saveExcelData'])->name('excel.data.save');
 });
 
 require __DIR__.'/auth.php';

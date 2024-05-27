@@ -5,12 +5,13 @@ namespace App\Models;
 
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 
-class ProductCategory
+class ProductCategory extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['name', 'parent_id'];
+    protected $fillable = ['title', 'parent_id'];
 
     public function parent()
     {

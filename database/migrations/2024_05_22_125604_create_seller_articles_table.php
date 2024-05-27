@@ -13,11 +13,10 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('product_categories', function (Blueprint $table) {
+        Schema::create('seller_articles', function (Blueprint $table) {
             $table->id();
-            $table->string('title');
-            $table->foreignId('parent_id')->nullable()->constrained('product_categories')->onDelete('cascade');
-
+            $table->unsignedBigInteger('product_id')->constrained()->onDelete('cascade');
+            $table->unsignedBigInteger('article')->unique(); // уникальное числовое поле для артикулов
             $table->timestamps();
         });
     }
@@ -29,6 +28,6 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('product_categories');
+        Schema::dropIfExists('seller_articles');
     }
 };

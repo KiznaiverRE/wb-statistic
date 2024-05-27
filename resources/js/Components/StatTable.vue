@@ -149,7 +149,7 @@ export default {
         },
         async saveData() {
             try {
-                const response = await axios.post('upload-excel', {
+                const response = await axios.post('/save-excel', {
                     headers: this.headers,
                     rows: this.rows
                 });

@@ -16,7 +16,7 @@ return new class extends Migration
         Schema::create('products', function (Blueprint $table) {
             $table->id(); // bigint unsigned
             $table->integer('sellers_article');
-            $table->integer('wb_article');
+            $table->integer('wb_article')->nullable();
             $table->string('title');
             $table->foreignId('category_id')->nullable()->constrained('product_categories')->onDelete('set null');
             $table->timestamps();
