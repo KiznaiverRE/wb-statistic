@@ -45,7 +45,7 @@ return [
             'delimiter'              => ',',
             'enclosure'              => '"',
             'line_ending'            => PHP_EOL,
-            'use_bom'                => false,
+            'use_bom'                => true,
             'include_separator_line' => false,
             'excel_compatibility'    => false,
             'output_encoding'        => '',
@@ -222,8 +222,11 @@ return [
     | [x] PhpOffice\PhpSpreadsheet\Cell\AdvancedValueBinder::class
     |
     */
+//    'value_binder'       => [
+//        'default' => Maatwebsite\Excel\DefaultValueBinder::class,
+//    ],
     'value_binder'       => [
-        'default' => Maatwebsite\Excel\DefaultValueBinder::class,
+        'default' => \App\Helper\AppDefaultValueBinder::class,
     ],
 
     'cache'        => [

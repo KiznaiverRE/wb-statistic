@@ -13,7 +13,7 @@ class Product extends Model
     use HasFactory;
 
     protected $fillable = [
-        'title', 'sellers_article', 'wb_article',  // добавьте сюда все необходимые поля
+        'title', 'sellers_article', 'wb_article', 'category_id', 'header_id', 'user_id'  // добавьте сюда все необходимые поля
     ];
 
     // Пример связи с другими моделями
@@ -34,6 +34,6 @@ class Product extends Model
 
     public function category()
     {
-        return $this->belongsTo(ProductCategory::class);
+        return $this->belongsTo(ProductCategory::class, 'category_id');
     }
 }

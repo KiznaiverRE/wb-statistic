@@ -17,6 +17,8 @@ return new class extends Migration
             $table->id();
             $table->unsignedBigInteger('product_id')->constrained()->onDelete('cascade');
             $table->unsignedBigInteger('article')->unique(); // уникальное числовое поле для артикулов
+            $table->unsignedBigInteger('header_id')->nullable();
+            $table->foreign('header_id')->references('id')->on('headers')->onDelete('cascade');
             $table->timestamps();
         });
     }

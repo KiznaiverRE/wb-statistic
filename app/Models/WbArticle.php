@@ -11,7 +11,7 @@ class WbArticle extends Model
     use HasFactory;
 
     protected $fillable = [
-        'product_id', 'article', // добавьте сюда все необходимые поля
+        'product_id', 'article', 'header_id' // добавьте сюда все необходимые поля
     ];
 
     public function product()

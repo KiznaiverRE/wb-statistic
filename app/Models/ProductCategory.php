@@ -11,7 +11,7 @@ class ProductCategory extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['title', 'parent_id'];
+    protected $fillable = ['title', 'parent_id', 'header_id'];
 
     public function parent()
     {
@@ -21,5 +21,10 @@ class ProductCategory extends Model
     public function children()
     {
         return $this->hasMany(ProductCategory::class, 'parent_id');
+    }
+
+    public function products()
+    {
+        return $this->hasMany(Product::class);
     }
 }

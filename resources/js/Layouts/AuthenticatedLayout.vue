@@ -1,3 +1,98 @@
+<style>
+    template{
+        display: block !important;
+    }
+    label.label {
+        display: block;
+        height: 300px;
+        width: 100%;
+        background: #eee;
+        text-align: center;
+        line-height: 300px;
+        border: 1px dotted #ccc;
+        border-radius: 10px;
+        cursor: pointer;
+    }
+
+    input.excelInput {
+        width: 0;
+        height: 0;
+        opacity: 0;
+        pointer-events: none;
+        user-select: none;
+    }
+
+    .file-drag-drop{
+        margin: 20px 40px;
+    }
+    /*form{*/
+    /*    display: block;*/
+    /*    height: 300px;*/
+    /*    width: 100%;*/
+    /*    background: #eee;*/
+
+    /*    text-align: center;*/
+    /*    line-height: 300px;*/
+    /*    border: 1px dotted #ccc;*/
+    /*    border-radius: 10px;*/
+    /*}*/
+    .table-block{
+        margin: 20px 40px;
+    }
+    table{
+        display: table;
+        width: 100%;
+        border: 1px solid #ccc;
+        /*margin: 40px;*/
+    }
+    table td{
+        border: 1px solid #ccc;
+        padding: 5px;
+    }
+    .scroll-wrapper {
+        position: relative;
+        width: 100%;
+    }
+
+    .scrollbar-top {
+        overflow-x: scroll;
+        height: 16px; /* Высота полосы прокрутки */
+        margin-bottom: -16px; /* Сдвиг вниз, чтобы наложить на таблицу */
+    }
+
+    .table-wrapper {
+        overflow-x: scroll;
+        overflow-y: scroll;
+        height: 90vh;
+        width: 100%;
+    }
+
+    .table-wrapper table {
+        width: 100%;
+    }
+
+    .data div {
+        margin-bottom: 1px;
+    }
+
+    .loader {
+        border-top-color: #3498db;
+        -webkit-animation: spinner 1.5s linear infinite;
+        animation: spinner 1.5s linear infinite;
+    }
+
+    @-webkit-keyframes spinner {
+        0% { -webkit-transform: rotate(0deg); }
+        100% { -webkit-transform: rotate(360deg); }
+    }
+
+    @keyframes spinner {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+</style>
+
+
 <script setup>
 import { ref } from 'vue';
 import ApplicationLogo from '@/Components/ApplicationLogo.vue';
@@ -30,7 +125,17 @@ const showingNavigationDropdown = ref(false);
                             <!-- Navigation Links -->
                             <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
                                 <NavLink :href="route('dashboard')" :active="route().current('dashboard')">
-                                    Dashboard
+                                    Себестоимость
+                                </NavLink>
+                                <NavLink :href="route('link.articles')" :active="route().current('link.articles')">
+                                    Связи
+                                </NavLink>
+                                <NavLink :href="route('fin.calculations')" :active="route().current('fin.calculations')">
+                                    Финансовый отчёт
+                                </NavLink>
+                                <NavLink :href="route('report.category')"
+                                         :active="['report.category', 'report.date', 'report.summary'].includes(route().current())">
+                                    Итоговые отчёты
                                 </NavLink>
                             </div>
                         </div>
@@ -113,7 +218,7 @@ const showingNavigationDropdown = ref(false);
                 >
                     <div class="pt-2 pb-3 space-y-1">
                         <ResponsiveNavLink :href="route('dashboard')" :active="route().current('dashboard')">
-                            Dashboard
+                            Себестоимость
                         </ResponsiveNavLink>
                     </div>
 

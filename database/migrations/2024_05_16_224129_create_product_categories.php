@@ -17,7 +17,8 @@ return new class extends Migration
             $table->id();
             $table->string('title')->nullable();
             $table->foreignId('parent_id')->nullable()->constrained('product_categories')->onDelete('cascade');
-
+            $table->unsignedBigInteger('header_id')->nullable();
+            $table->foreign('header_id')->references('id')->on('headers')->onDelete('cascade');
             $table->timestamps();
         });
     }
