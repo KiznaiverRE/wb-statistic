@@ -13,6 +13,7 @@ use App\Models\Product;
 use App\Models\ProductCategory;
 use App\Services\Date\DateFilterService;
 use App\Services\DateFormatService;
+use App\Services\Excel\ExcelHeaderValidatorService;
 use App\Services\Excel\ExcelParsingService;
 use App\Services\Report\FinalReportService;
 use Carbon\Carbon;
@@ -31,10 +32,12 @@ class ProductFinanceController extends Controller
     protected $dateFormatService;
     protected $dateFilterService;
     protected $bcmath;
+    protected ExcelHeaderValidatorService $headerValidator;
 
-    public function __construct(DateFormatService $dateFormatService, DateFilterService $dateFilterService){
+    public function __construct(DateFormatService $dateFormatService, DateFilterService $dateFilterService, ExcelHeaderValidatorService $headerValidator){
         $this->dateFormatService = $dateFormatService;
         $this->dateFilterService = $dateFilterService;
+        $this->headerValidator = $headerValidator;
     }
 
     public function uploadStat(Request $request) {
@@ -47,6 +50,12 @@ class ProductFinanceController extends Controller
 
             $file = $request->file('file');
             $data = ExcelParsingService::getDataFromExcel($file);
+
+            $missingHeaders = $this->headerValidator->validateHeaders($data['headers'], 'finance');
+
+            if ($missingHeaders !== true){
+                return response()->json(['error', 'Failed to process the spreadsheet file.'], 500);
+            }
 
             $groupedData = [];
             $finances = [];
@@ -331,8 +340,6 @@ class ProductFinanceController extends Controller
 
         $customHeading = [' ', $data['report_date']];
 
-
-
 //        $arr = array_combine($values2, $data);
 //        array_unshift($data, $values);
 
@@ -349,6 +356,12 @@ class ProductFinanceController extends Controller
 
         $file = $request->file('file');
         $data = ExcelParsingService::getDataFromExcel($file);
+
+        $missingHeaders = $this->headerValidator->validateHeaders($data['headers'], 'ads');
+
+        if ($missingHeaders !== true){
+            return response()->json(['error', 'Failed to process the spreadsheet file.'], 500);
+        }
 
         $finData = $request->input('newRows');
 
@@ -389,9 +402,6 @@ class ProductFinanceController extends Controller
 //                    if (!isset($item['reports'][$week]['data'])) {
 //                        $item['reports'][$week]['data'] = [];
 //                    }
-
-
-
 
                     if (isset($item['reports'][$week])){
                         $item['reports'][$week]['data']['ads'] = BC::add($item['reports'][$week]['data']['ads'], $value['Сумма'], 2);
@@ -457,6 +467,12 @@ class ProductFinanceController extends Controller
 
         $file = $request->file('file');
         $data = ExcelParsingService::getDataFromExcel($file);
+
+        $missingHeaders = $this->headerValidator->validateHeaders($data['headers'], 'storage');
+
+        if ($missingHeaders !== true){
+            return response()->json(['error', 'Failed to process the spreadsheet file.'], 500);
+        }
 
         $finData = $request->input('newRows');
 

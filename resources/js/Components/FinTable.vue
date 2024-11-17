@@ -5,17 +5,9 @@
 <template>
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-5">
-<!--                <div class="file-drag-drop">-->
-<!--                    <label class="label">-->
-<!--                        <span class="drop-files">Выбрать файл</span>-->
-<!--                        <input accept=".xlsx, .xls" id="excelInput" type="file" @change="handleFileUpload" >-->
-<!--                    </label>-->
-<!--                </div>-->
-
-
+            <div class="bg-white shadow-sm sm:rounded-lg p-5">
                 <div class="flex mb-3">
-                    <div class="p-5 block w-auto">
+                    <div class="p-5 block w-auto flex align-middle">
                         <label class="dp__pointer w-100 align-middle select-none font-sans font-bold text-center uppercase transition-all disabled:opacity-50 disabled:shadow-none disabled:pointer-events-none text-xs py-3 px-6 bg-transparent hover:bg-blue-500 text-blue-700 font-semibold hover:text-white py-2 px-4 border border-blue-500 hover:border-transparent rounded flex items-center gap-3"
                         >
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"
@@ -28,8 +20,11 @@
 
                             <input accept=".xlsx, .xls" class="excelInput" type="file" @change="uploadFinFile" >
                         </label>
+                        <div class="block w-auto">
+                            <DownloadTemplateButton document-type="finance" text-node="" filename="Шаблон Finance"/>
+                        </div>
                     </div>
-                    <div class="p-5 block w-auto">
+                    <div class="p-5 block w-auto flex">
                         <label class="dp__pointer w-100 align-middle select-none font-sans font-bold text-center uppercase transition-all disabled:opacity-50 disabled:shadow-none disabled:pointer-events-none text-xs py-3 px-6 bg-transparent hover:bg-blue-500 text-blue-700 font-semibold hover:text-white py-2 px-4 border border-blue-500 hover:border-transparent rounded flex items-center gap-3"
                         >
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"
@@ -42,8 +37,11 @@
 
                             <input accept=".xlsx, .xls" class="excelInput" type="file" @change="uploadAdsFile" >
                         </label>
+                        <div class="block w-auto">
+                            <DownloadTemplateButton document-type="ads" text-node="" filename="Шаблон Ads"/>
+                        </div>
                     </div>
-                    <div class="p-5 block w-auto">
+                    <div class="p-5 block w-auto flex">
                         <label class="dp__pointer w-100 align-middle select-none font-sans font-bold text-center uppercase transition-all disabled:opacity-50 disabled:shadow-none disabled:pointer-events-none text-xs py-3 px-6 bg-transparent hover:bg-blue-500 text-blue-700 font-semibold hover:text-white py-2 px-4 border border-blue-500 hover:border-transparent rounded flex items-center gap-3"
                         >
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"
@@ -56,6 +54,9 @@
 
                             <input accept=".xlsx, .xls" class="excelInput" type="file" @change="uploadStorageFile" >
                         </label>
+                        <div class="block w-auto">
+                            <DownloadTemplateButton document-type="storage" text-node="" filename="Шаблон Storage"/>
+                        </div>
                     </div>
                     <div v-if="loading" class="flex justify-center items-center">
                         <div class="loader ease-linear rounded-full border-4 border-t-4 border-gray-200 h-12 w-12"></div>
@@ -66,34 +67,20 @@
                 <div v-if="filteredRows && Object.keys(filteredRows).length > 0" class="flex items-center justify-between">
                     <div class="flex items-center">
                         <div class="p-5 block w-auto">
-                            <label class="dp__pointer w-100 align-middle select-none font-sans font-bold text-center uppercase transition-all disabled:opacity-50
-                disabled:shadow-none disabled:pointer-events-none text-xs py-3 px-6 bg-transparent
-                hover:bg-blue-500 text-blue-700 font-semibold hover:text-white py-2 px-4 border border-blue-500 hover:border-transparent rounded flex items-center gap-3"
-                            >
-                                <svg class="h-5 w-5" width="5" height="5" viewBox="0 0 24 24"
-                                     stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round"
-                                     stroke-linejoin="round">
-                                    <path stroke="none" d="M0 0h24v24H0z"/>
-                                    <path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2"/>
-                                    <polyline points="7 11 12 16 17 11"/>
-                                    <line x1="12" y1="4" x2="12" y2="16"/>
-                                </svg>
-                                <span>Скачать шаблон</span>
-                            </label>
-                        </div>
-                        <button @click="deleteAllData" class="p-5 flex items-center bg-transparent hover:bg-red-500 text-red-700 font-semibold
+                            <button @click="deleteAllData" class="p-5 flex items-center bg-transparent hover:bg-red-500 text-red-700 font-semibold
                         hover:text-white py-2 px-4 border border-red-500 hover:border-transparent rounded">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <line x1="18" y1="6" x2="6" y2="18"></line>
-                                <line x1="6" y1="6" x2="18" y2="18"></line>
-                            </svg>
-                            <span>Удалить данные</span>
-                        </button>
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                                </svg>
+                                <span>Удалить данные</span>
+                            </button>
+                        </div>
                     </div>
 
                     <div class="p-5">
                         <template>
-                            <VueDatePicker v-model="date" range :enable-time-picker="false" :preset-dates="presetDates" @update:model-value="">
+                            <VueDatePicker v-model="priceDateRange" range :enable-time-picker="false" :preset-dates="presetDates" @update:model-value="">
                                 <template #preset-date-range-button="{ label, value, presetDate }">
                                     <span
                                         role="button"
@@ -288,11 +275,19 @@
 </template>
 
 <script>
+import {ref} from "vue";
+
+const date = ref();
 import SearchInput from "@/Components/SearchInput.vue";
+import DownloadTemplateButton from "@/Components/DownloadTemplateButton.vue";
 import {mapState, mapActions} from 'vuex';
+import {endOfMonth, endOfWeek, endOfYear, startOfMonth, startOfWeek, startOfYear, subMonths} from "date-fns";
     export default {
         name: "FinTable",
-        components: {SearchInput},
+        components: {
+            SearchInput,
+            DownloadTemplateButton
+        },
         data() {
             return {
                 parsedData: null,
@@ -305,6 +300,17 @@ import {mapState, mapActions} from 'vuex';
                     next_page_url: null,
                     prev_page_url: null,
                 },
+                priceDateRange: null,
+                presetDates: [
+                    { label: 'Today', value: [new Date(), new Date()] },
+                    { label: 'Этот месяц', value: [startOfMonth(new Date()), endOfMonth(new Date())] },
+                    { label: 'Эта неделя', value: [startOfWeek(new Date()), endOfWeek(new Date())]},
+                    {
+                        label: 'Прошлый месяц',
+                        value: [startOfMonth(subMonths(new Date(), 1)), endOfMonth(subMonths(new Date(), 1))],
+                    },
+                    { label: 'Этот год', value: [startOfYear(new Date()), endOfYear(new Date())] },
+                ],
                 headers: [],
                 newRows: [],
                 editing: false,
@@ -325,8 +331,6 @@ import {mapState, mapActions} from 'vuex';
                 const filtered = {};
                 for (const key in this.rows) {
                     const row = this.rows[key];
-                    console.log(this.rows)
-                    console.log(row)
                     if (Object.values(row).some(value => {
                         // Проверяем, что value не является null или undefined
                         if (value == null) return false;
@@ -343,7 +347,6 @@ import {mapState, mapActions} from 'vuex';
                 for (let i = 1; i <= this.pagination.last_page; i++ ){
                     pages.push(i)
                 }
-                console.log(pages)
                 return pages;
             },
         },
@@ -378,6 +381,7 @@ import {mapState, mapActions} from 'vuex';
                 } catch (error) {
                     console.error('Error uploading file:', error);
                     this.setErrorMessage('Неверный формат файла, используйте шаблон для загрузки файлов');
+                    event.target.value = '';
 
                     // Детальный вывод ошибки
                     if (error.response) {
@@ -415,7 +419,6 @@ import {mapState, mapActions} from 'vuex';
             uploadFinFile(event){
                 const url = '/upload-fin';
 
-
                 this.uploadFile(null, event, url, (data) => {
                     if (data) {
                         const rows = data;
@@ -423,7 +426,6 @@ import {mapState, mapActions} from 'vuex';
                         // Преобразование объекта rows в массив
                         const rowsArray = Object.values(rows);
 
-                        console.log(rows);
                         //
                         this.newRows.push(...rowsArray);
                     }
@@ -464,8 +466,6 @@ import {mapState, mapActions} from 'vuex';
                             // Преобразование объекта rows в массив
                             const rowsArray = Object.values(rows);
 
-                            console.log(rows);
-
                             this.newRows.push(...rowsArray);
                         }
                     });
@@ -483,7 +483,6 @@ import {mapState, mapActions} from 'vuex';
                         }
                     })
                     .then(response => {
-                        console.log(response.data.data.data)
                         this.rows = response.data.data.data;
                         this.pagination = response.data.pagination
                         this.loading = false;
@@ -506,7 +505,6 @@ import {mapState, mapActions} from 'vuex';
                 }
             },
             deleteAllData(){
-                console.log(this.rows)
                 axios.post('/delete-fin-data', this.rows)
                 .then(response => {
                     this.getData();
@@ -518,7 +516,6 @@ import {mapState, mapActions} from 'vuex';
                         responseType: 'blob' // Указываем, что ожидаем бинарный файл
                     })
                     .then(response => {
-                        console.log(response.data)
                         const url = window.URL.createObjectURL(new Blob([response.data]));
                         const link = document.createElement('a');
                         link.href = url;
@@ -541,7 +538,6 @@ import {mapState, mapActions} from 'vuex';
 
                 axios.post('/saveReport', report)
                     .then(response => {
-                        console.log(response.data)
                         // report = response.data;
                         this.getData();
                     })

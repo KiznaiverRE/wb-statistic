@@ -42,7 +42,7 @@ class ExcelParsingService
             $newHeaders = self::normalizeRowData($newHeaders);
             $data['headers'] = $newHeaders;
 
-            Log::info($data['headers']);
+//            Log::info($data['headers']);
 //            $data['headers'] = $newHeaders;
 
 

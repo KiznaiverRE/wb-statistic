@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\CostPrice;
 use App\Models\ProductCategory;
 use App\Models\WbArticle;
+use App\Services\Excel\ExcelHeaderValidatorService;
 use App\Services\Excel\ExcelParsingService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -16,7 +17,15 @@ use PhpOffice\PhpSpreadsheet\IOFactory;
 
 class ProductLinkController extends Controller
 {
-    public function saveLink(Request $request) {
+    protected ExcelHeaderValidatorService $headerValidator;
+
+    public function __construct(ExcelHeaderValidatorService $headerValidator)
+    {
+        $this->headerValidator = $headerValidator;
+    }
+
+    public function saveLink(Request $request)
+    {
         $products = $request->input('product');
         if ($request->has('key')){
             $hasId = $request->input('key');
@@ -95,6 +104,15 @@ class ProductLinkController extends Controller
 
             $data = ExcelParsingService::getDataFromExcel($file);
 
+            $missingHeaders = $this->headerValidator->validateHeaders($data['headers'], 'link');
+
+            Log::info($data['headers']);
+            Log::info($missingHeaders);
+
+            if ($missingHeaders !== true){
+                return response()->json(['error' => 'Failed to process the spreadsheet file.'], 500);
+            }
+
             $ids = [];
 
             foreach ($data['rows'] as $value){
@@ -122,13 +140,8 @@ class ProductLinkController extends Controller
                             $product->sellers_article = $value['Артикул 1С'];
                             $product->category_id = $productCategory->id;
 
-                        if ($value['Артикул 1С'] == 71036277){
-                            Log::info(json_encode($product, JSON_UNESCAPED_UNICODE));
-                        }
-
                             $product->save();
                     }else{
-                        Log::info('creating product...');
                         Product::create([
                             'title' => $value['Наименование общее'],
                             'wb_article' => $value['АРТ ВБ'],

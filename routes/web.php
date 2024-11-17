@@ -61,21 +61,28 @@ Route::get('/reports/summary' , function (){
 
 
 
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', 'verified'])->group(function () {
+    //User Profile
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
+    //General
+//    Route::post('/download')
+
+    //Cost
     Route::get('/excel-data', [ProductCostController::class, 'getExcelData'])->name('excel.data.get');
     Route::post('/upload-excel', [ProductCostController::class, 'uploadExcelData'])->name('excel.data.upload');
     Route::post('/save-excel', [ProductCostController::class, 'saveExcelData'])->name('excel.data.save');
-
     Route::post('/save-product', [ProductCostController::class, 'saveProduct'])->name('product.save');
     Route::post('/filtered-prices', [ProductCostController::class, 'getFilteredData'])->name('product.prices.filtered.get');
 
+
+    //Link
     Route::post('/save-link', [ProductLinkController::class, 'saveLink'])->name('product.link.save');
     Route::post('/upload-links', [ProductLinkController::class, 'uploadLinksData'])->name('product.link.upload');
 
+    //Finance
     Route::post('/upload-fin', [ProductFinanceController::class, 'uploadStat'])->name('fin.upload');
     Route::post('/upload-ads', [ProductFinanceController::class, 'uploadAds'])->name('ads.upload');
     Route::post('/upload-storage', [ProductFinanceController::class, 'uploadStorage'])->name('storage.upload');

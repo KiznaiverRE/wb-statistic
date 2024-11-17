@@ -11,11 +11,13 @@ use App\Models\SellerArticle;
 use App\Models\WbArticle;
 use App\Services\Date\DateFilterService;
 use App\Services\DateFormatService;
+use App\Services\Excel\ExcelHeaderValidatorService;
 use App\Services\Excel\ExcelParsingService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\Facades\Excel;
 use Maatwebsite\Excel\HeadingRowImport;
 use PhpOffice\PhpSpreadsheet\IOFactory;
@@ -26,45 +28,44 @@ use Illuminate\Support\Facades\DB;
 
 class ProductCostController extends Controller
 {
-    protected $dateFormatService;
-    protected $dateFilterService;
+    protected DateFormatService $dateFormatService;
+    protected DateFilterService $dateFilterService;
+    protected ExcelHeaderValidatorService $headerValidator;
 
-    public function __construct(DateFormatService $dateFormatService, DateFilterService $dateFilterService){
+    public function __construct(DateFormatService $dateFormatService, DateFilterService $dateFilterService, ExcelHeaderValidatorService $headerValidator){
         $this->dateFormatService = $dateFormatService;
         $this->dateFilterService = $dateFilterService;
+        $this->headerValidator = $headerValidator;
     }
 
     // Метод для обработки данных из Excel
     public function uploadExcelData(Request $request)
     {
-        try {
-            // Проверка наличия файла
-            if (!$request->hasFile('file')) {
-                return response()->json(['error' => 'No file uploaded'], 400);
-            }
+        $request->validate([
+            'file' => 'required|file|mimes:xlsx,xls'
+        ]);
 
+        try {
             // Получение загруженного файла
             $file = $request->file('file');
 
             $excelData = ExcelParsingService::getDataFromExcel($file);
 
+            Log::info($excelData['headers']);
 
-            $rows = [];
+            $data['headers'] = $this->headerValidator->formatHeaders($excelData['headers']);
+            $missingHeaders = $this->headerValidator->validateHeaders($excelData['headers'], 'cost');
 
-            foreach ($excelData['headers'] as $k => $v) {
-                $data['headers'][$k] = mb_ucfirst(mb_strtolower($v));
+            if ($missingHeaders !== true){
+                return response()->json(['error' => 'Failed to process the spreadsheet file.'], 500);
             }
-
-//            Log::info($data['headers']);
-
-//            $data['headers'] = $excelData['headers'];
-
 
             foreach ($excelData['rows'] as $row) {
                 $lowercaseRow = [];
                 foreach ($row as $k => $v) {
                     $lowercaseRow[mb_ucfirst(mb_strtolower($k))] = $v;
                 }
+
 
                 $data['rows'][$lowercaseRow['Артикул продавца']]['meta'] = [
                     'sellers_article' => $lowercaseRow['Артикул продавца'],
@@ -74,17 +75,7 @@ class ProductCostController extends Controller
                 ];
 
                 $data['rows'][$lowercaseRow['Артикул продавца']]['prices'] = array_slice($lowercaseRow, 4);
-//                if (count($lowercaseRow) > 4){
-//
-//                }else{
-//                    $data['rows'][$lowercaseRow['артикул продавца']]['prices'] = [];
-//                }
-
             }
-
-//            Log::info(json_encode($data));
-
-
             return response()->json($data);
 
         } catch (\PhpOffice\PhpSpreadsheet\Exception $e) {
@@ -117,7 +108,7 @@ class ProductCostController extends Controller
             $query->where('sellers_article', 'like', '%' . $search . '%')
                 ->orWhere('title', 'like', '%' . $search . '%')
                 ->orWhereHas('category', function ($query) use ($search){
-                   $query->where('title', 'like', '%' . $search . '%');
+                    $query->where('title', 'like', '%' . $search . '%');
                 });
         }
 
@@ -195,7 +186,6 @@ class ProductCostController extends Controller
             }
 
             foreach ($data['rows'] as $key => $item){
-                Log::info($item['meta']);
                 $productData = [
                     'title' => $item['meta']['title'] ? $item['meta']['title'] : NULL,
                     'sellers_article' => (int)$item['meta']['sellers_article'],
@@ -261,9 +251,6 @@ class ProductCostController extends Controller
         $category = ProductCategory::updateOrCreate(
             ['title' => $data['product']['meta']['category']], // Уникальный ключ для поиска
         );
-//        Log::info(json_encode($data));
-//        Log::info(json_encode($product));
-//        Log::info(json_encode($category));
         $product->category()->associate($category);
 
         $product->sellers_article = $data['product']['meta']['sellers_article'];

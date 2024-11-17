@@ -30,24 +30,17 @@
                         <!-- Добавляем компонент поиска -->
                         <SearchInput @search="handleSearch" />
                     </div>
-                    <div class="flex items-center mb-3 justify-between">
-                        <div class="p-5 block w-auto">
-                            <label class="dp__pointer w-100 align-middle select-none font-sans font-bold text-center uppercase transition-all disabled:opacity-50
-                    disabled:shadow-none disabled:pointer-events-none text-xs py-3 px-6 bg-transparent
-                    hover:bg-blue-500 text-blue-700 font-semibold hover:text-white py-2 px-4 border border-blue-500 hover:border-transparent rounded flex items-center gap-3"
-                            >
-                                <svg class="h-5 w-5" width="5" height="5" viewBox="0 0 24 24"
-                                     stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round"
-                                     stroke-linejoin="round">
-                                    <path stroke="none" d="M0 0h24v24H0z"/>
-                                    <path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2"/>
-                                    <polyline points="7 11 12 16 17 11"/>
-                                    <line x1="12" y1="4" x2="12" y2="16"/>
-                                </svg>
-                                <span>Скачать шаблон</span>
-                            </label>
-                        </div>
+                    <div class="p-5 block w-auto">
+                        <DownloadTemplateButton document-type="link" text-node="Скачать шаблон" filename="Шаблон Link"/>
                     </div>
+                </div>
+
+                <!-- Красивый блок с выводом ошибки -->
+                <div v-if="errorMessage" class="m-5 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+                    <p>{{ errorMessage }}</p>
+                    <button @click="clearErrorMessage" class="absolute top-0 bottom-0 right-0 px-4 py-3">
+                        <svg class="fill-current h-6 w-6 text-red-500" role="button" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><title>Close</title><path d="M14.348 14.849a1.2 1.2 0 0 1-1.697 0L10 11.819l-2.651 3.029a1.2 1.2 0 1 1-1.697-1.697l2.758-3.15-2.759-3.152a1.2 1.2 0 1 1 1.697-1.697L10 8.183l2.651-3.031a1.2 1.2 0 1 1 1.697 1.697l-2.758 3.152 2.758 3.15a1.2 1.2 0 0 1 0 1.698z"/></svg>
+                    </button>
                 </div>
 
 
@@ -139,9 +132,14 @@
 <script>
 
 import SearchInput from "@/Components/SearchInput.vue";
+import DownloadTemplateButton from "@/Components/DownloadTemplateButton.vue";
+import {mapState, mapActions} from "vuex";
 export default {
     name: "LinkTable",
-    components: {SearchInput},
+    components: {
+        SearchInput,
+        DownloadTemplateButton
+    },
     data() {
         return {
             headers: ['Название', 'Артикул продавца'],
@@ -159,7 +157,7 @@ export default {
             errors: {},
             selectedDate: null,
             searchQuery: '', // Добавляем поле для поиска
-            message: null
+            message: null,
         };
     },
     computed: {
@@ -192,11 +190,13 @@ export default {
             console.log(pages)
             return pages;
         },
+        ...mapState('error', ['errorMessage'])
     },
     created(){
         this.getData();
     },
     methods: {
+        ...mapActions('error', ['setErrorMessage', 'clearErrorMessage']),
         validateRow(row) {
             const errors = {};
             if (!row.meta['title'] || row.meta['title'] === '') {
@@ -275,7 +275,7 @@ export default {
             const formData = new FormData();
             formData.append('file', file);
 
-            console.log(formData)
+            console.log(file)
 
             try {
                 const response = await axios.post('/upload-links', formData, {
@@ -288,25 +288,8 @@ export default {
                 console.log(response.data)
 
                 this.getData();
-
-                // Итерируем по rows и добавляем элементы в this.rows
-                // for (let key in rows) {
-                //     if (rows.hasOwnProperty(key)) {
-                        // Добавляем или обновляем элемент в this.rows
-                        // if (!this.newRows[key]) {
-                        //     this.newRows[key] = rows[key];
-                        // }
-                        // else {
-                        //     // Если элемент уже существует, обновляем его
-                        //     for (let subKey in rows[key]) {
-                        //         if (rows[key].hasOwnProperty(subKey)) {
-                        //             this.rows[key][subKey] = rows[key][subKey];
-                        //         }
-                        //     }
-                        // }
-                //     }
-                // }
             } catch (error) {
+                this.setErrorMessage('Неверный формат файла, используйте шаблон для загрузки файлов')
                 console.error('Error uploading file:', error);
             }
         },

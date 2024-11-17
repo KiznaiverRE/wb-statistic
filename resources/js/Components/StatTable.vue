@@ -38,23 +38,7 @@
                     </div>
                     <div class="flex items-center mb-3 justify-between">
                         <div class="p-5 block w-auto">
-                            <label class="dp__pointer w-100 align-middle select-none font-sans font-bold text-center uppercase transition-all disabled:opacity-50
-                                          disabled:shadow-none disabled:pointer-events-none text-xs py-3 px-6 bg-transparent
-                                          hover:bg-blue-500 text-blue-700 font-semibold hover:text-white py-2 px-4 border
-                                          border-blue-500 hover:border-transparent rounded flex items-center gap-3"
-                            >
-                                <svg class="h-5 w-5" width="5" height="5" viewBox="0 0 24 24"
-                                     stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round"
-                                     stroke-linejoin="round">
-                                    <path stroke="none" d="M0 0h24v24H0z"/>
-                                    <path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2"/>
-                                    <polyline points="7 11 12 16 17 11"/>
-                                    <line x1="12" y1="4" x2="12" y2="16"/>
-                                </svg>
-                                <span>Скачать шаблон</span>
-
-                                <input accept=".xlsx, .xls" class="excelInput" type="file" @change="handleFileUpload" >
-                            </label>
+                            <DownloadTemplateButton document-type="cost" text-node="Скачать шаблон" filename="Шаблон Cost"/>
                         </div>
                         <div class="p-5">
                             <template>
@@ -188,36 +172,39 @@
 
 </template>
 <script setup>
+
+</script>
+<script>
+import { read, utils } from 'xlsx';
 import { ref } from 'vue';
 import { endOfMonth, endOfYear, startOfMonth, startOfYear, subMonths, startOfWeek, endOfWeek, getWeeksInMonth } from 'date-fns';
 
 const date = ref();
-const priceDateRange = ref();
-
-const presetDates = ref([
-    { label: 'Today', value: [new Date(), new Date()] },
-    { label: 'Этот месяц', value: [startOfMonth(new Date()), endOfMonth(new Date())] },
-    { label: 'Эта неделя', value: [startOfWeek(new Date()), endOfWeek(new Date())]},
-    {
-        label: 'Прошлый месяц',
-        value: [startOfMonth(subMonths(new Date(), 1)), endOfMonth(subMonths(new Date(), 1))],
-    },
-    { label: 'Этот год', value: [startOfYear(new Date()), endOfYear(new Date())] },
-]);
-</script>
-<script>
-import { read, utils } from 'xlsx';
 import ExcelJS from 'exceljs';
 import interact from 'interactjs';
 import SearchInput from "@/Components/SearchInput.vue";
-import {mapState, mapActions} from 'vuex'
+import {mapState, mapActions} from 'vuex';
+import DownloadTemplateButton from "@/Components/DownloadTemplateButton.vue";
 
 export default {
-    components: {SearchInput},
+    components: {
+        SearchInput,
+        DownloadTemplateButton
+    },
     data() {
         return {
             parsedData: null,
             rows: [],
+            presetDates: [
+                { label: 'Today', value: [new Date(), new Date()] },
+                { label: 'Этот месяц', value: [startOfMonth(new Date()), endOfMonth(new Date())] },
+                { label: 'Эта неделя', value: [startOfWeek(new Date()), endOfWeek(new Date())]},
+                {
+                    label: 'Прошлый месяц',
+                    value: [startOfMonth(subMonths(new Date(), 1)), endOfMonth(subMonths(new Date(), 1))],
+                },
+                { label: 'Этот год', value: [startOfYear(new Date()), endOfYear(new Date())] },
+            ],
             pagination: {
                 current_page: 1,
                 last_page: 1,
@@ -238,7 +225,8 @@ export default {
             prices: [],
             searchQuery: '',
             message: null,
-            dateDilterApplied: false,
+            dateFilterApplied: false,
+            priceDateRange: null
         };
     },
     computed: {
@@ -279,7 +267,8 @@ export default {
             const formData = new FormData();
             formData.append('file', file);
 
-
+            // console.log(fileInput)
+            console.log(event.target.files)
             try {
                 const response = await axios.post('/upload-excel', formData, {
                     headers: {
@@ -336,6 +325,8 @@ export default {
                 }
 
                 this.headers = this.sortPrices(this.headers, false, 'values');
+                const fileInput = event.target;
+                fileInput.value = ''; // сбрасываем значение
 
             } catch (error) {
                 this.setErrorMessage('Неверный формат файла, используйте шаблон для загрузки файлов');
@@ -362,8 +353,6 @@ export default {
                 const sortedDates = this.sortDates(items)
                 return [...firstFourValues, ...sortedDates];
             }
-
-
         },
         sortDates(dates){
             const sortedDates = dates.sort((a,b) => {
@@ -412,7 +401,7 @@ export default {
                     this.rows = rows;
 
                     // Применяем фильтрацию, если она была применена
-                    console.log(this.priceDateRange)
+                    console.log(22222222)
                     if (this.filterApplied) {
                         console.log(111111111111)
                         this.filterPricesByDateRange(this.priceDateRange);
@@ -426,14 +415,29 @@ export default {
             }
         },
         filterPricesByDateRange(date){
-            this.filterApplied = true; // Устанавливаем флаг, что фильтрация была применена
             for (const key in this.rows){
                 const row = this.rows[key]
                 axios.post('/filtered-prices', {
                     date: date,
                     id: row.id,
                 }).then(response => {
+                    this.filterApplied = true; // Устанавливаем флаг, что фильтрация была применена
                     this.rows[key].prices = response.data.prices
+                    this.rows[key].prices = this.sortPrices(this.rows[key].prices, true, 'keys');
+                    // this.headers = Object.keys(this.rows[key].prices);
+
+                    const firstFourValues = this.headers.slice(0, 4);
+                    const remainingValues = Object.keys(this.rows[key].prices);
+
+                    const items = Object.values(remainingValues);
+                    const sortedDates = this.sortDates(items)
+
+                    console.log(firstFourValues)
+                    console.log(remainingValues)
+
+                    this.headers = [...firstFourValues, ...sortedDates];
+
+                    // console.log(Object.keys(this.rows[key].prices))
                 })
             }
             // this.getData()
@@ -493,9 +497,6 @@ export default {
         },
         clearSearch(query) {
             this.searchQuery = query;
-        },
-        showMessage(){
-
         },
         cancelEdit() {
             this.editing = false;
