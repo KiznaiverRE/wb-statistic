@@ -368,6 +368,7 @@ import {endOfMonth, endOfWeek, endOfYear, startOfMonth, startOfWeek, startOfYear
 
                 try {
                     this.loading = true;
+                    console.log(url)
                     const response = await axios.post(url, formData, {
                         headers: {
                             'Content-Type': 'multipart/form-data'

@@ -43,6 +43,8 @@ class ExcelHeaderValidatorService
 
         $missingHeaders = array_diff($templateHeaders, $formattedHeaders);
 
+        Log::info('$missingHeaders: '. json_encode($missingHeaders));
+
         return empty($missingHeaders) ? true : $missingHeaders;
     }
 }

@@ -237,8 +237,6 @@ class ProductFinanceController extends Controller
                         $arr[$article]['reports'][$week]['data']['logisticPercent'] = 0;
                         $arr[$article]['reports'][$week]['data']['averageCheck'] = 0;
                     } else {
-                        Log::info('transfers: '.$transfers);
-                        Log::info('orders count: '.$weekData['data']['ordersCount']);
                         $arr[$article]['reports'][$week]['data']['logisticPercent'] =
                             BC::div($weekData['data']['logistic'], BC::div($transfers, 100, 2), 2);
                         if ($weekData['data']['ordersCount'] > 0){
@@ -352,6 +350,8 @@ class ProductFinanceController extends Controller
     }
 
     public function uploadAds(Request $request){
+        Log::info(000000000000000000);
+        try {
         $user = Auth::user();
 
         if (!$request->hasFile('file')) {
@@ -364,10 +364,15 @@ class ProductFinanceController extends Controller
         $missingHeaders = $this->headerValidator->validateHeaders($data['headers'], 'ads');
 
         if ($missingHeaders !== true){
-            return response()->json(['error', 'Failed to process the spreadsheet file.'], 500);
+            Log::info('$missingHeaders controller: '. json_encode($missingHeaders));
+            return response()->json(['error', 'Failed to process the spreadsheet filesssss.'], 500);
         }
 
+
+
         $finData = $request->input('newRows');
+
+        Log::info(11111111111111111111);
 
         // Проверяем, есть ли newRows и является ли он валидным JSON
         if (!empty($finData)) {
@@ -380,6 +385,7 @@ class ProductFinanceController extends Controller
         } else {
             $newRows = [];
         }
+            Log::info(2222222222222222);
 
         foreach ($newRows as $index => $item) {
             $article = $item['meta']['wb_article'];
@@ -416,10 +422,7 @@ class ProductFinanceController extends Controller
                 }
             }
         }
-
-
-
-
+            Log::info(33333333333333333);
         foreach ($newRows as $key => $item) {
             foreach ($item['reports'] as $k => $v) {
                 if ($v['data']['storage'] == 0) {
@@ -451,7 +454,7 @@ class ProductFinanceController extends Controller
                 }
             }
         }
-
+            Log::info(4444444444444444);
         // Создаем новый массив с ключами-артикулами
         $newRowsWithArticleKeys = [];
         foreach ($newRows as $item) {
@@ -460,6 +463,16 @@ class ProductFinanceController extends Controller
         }
 
         return response()->json(['data' => $newRowsWithArticleKeys], 200);
+
+
+        } catch (\Exception $e) {
+            Log::error('General error: ' . $e->getMessage(), [
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            return response()->json(['error' => 'An unexpected error occurred.'], 500);
+        }
     }
 
     public function uploadStorage(Request $request){
