@@ -230,15 +230,19 @@ class ProductFinanceController extends Controller
                     $transfers = $weekData['data']['transfers'];
 
 
+
+
+
                     if ($transfers == 0) {
                         $arr[$article]['reports'][$week]['data']['logisticPercent'] = 0;
                         $arr[$article]['reports'][$week]['data']['averageCheck'] = 0;
                     } else {
+                        Log::info('transfers: '.$transfers);
+                        Log::info('orders count: '.$weekData['data']['ordersCount']);
                         $arr[$article]['reports'][$week]['data']['logisticPercent'] =
                             BC::div($weekData['data']['logistic'], BC::div($transfers, 100, 2), 2);
-                        if ($transfers > 0){
-                            $arr[$article]['reports'][$week]['data']['averageCheck'] =
-                                BC::div($transfers, $weekData['data']['ordersCount'], 2);
+                        if ($weekData['data']['ordersCount'] > 0){
+                            $arr[$article]['reports'][$week]['data']['averageCheck'] = BC::div($transfers, $weekData['data']['ordersCount'], 2);
                         }else{
                             $arr[$article]['reports'][$week]['data']['averageCheck'] = 0;
                         }
