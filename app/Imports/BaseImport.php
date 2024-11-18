@@ -5,35 +5,45 @@ namespace App\Imports;
 
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
+use Maatwebsite\Excel\Concerns\ToArray;
 use Maatwebsite\Excel\Concerns\ToCollection;
+use Maatwebsite\Excel\Concerns\WithChunkReading;
 use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Concerns\WithCustomValueBinder;
 use PhpOffice\PhpSpreadsheet\Cell\Cell;
 use PhpOffice\PhpSpreadsheet\Cell\DataType;
 use PhpOffice\PhpSpreadsheet\Cell\DefaultValueBinder;
 
-class BaseImport extends DefaultValueBinder implements ToCollection, WithMapping, WithCustomValueBinder
+class BaseImport extends DefaultValueBinder implements WithCustomValueBinder, ToArray, WithChunkReading
 {
-    public $data;
+//    public $data;
+    public array $data = [];
 
-    public function collection(Collection $collection)
+//    public function collection(Collection $collection)
+//    {
+//        $this->data = $collection;
+//    }
+
+    public function array(array $array)
     {
-        $this->data = $collection;
+
+        $this->data = array_merge($this->data, $array);
+    }
+
+    public function chunkSize(): int
+    {
+        return 1000;
     }
 
     // Метод для получения данных в виде массива
     public function getData()
     {
-        return $this->data->toArray();
+        Log::info('this data:' .json_encode($this->data));
+        return $this->data;
     }
 
-    public function map($row): array
-    {
-//        return array_map('strval', is_array($row) ? $row : $row->toArray());
-        return $row;
-    }
-
-    public function convertNumToDate(){
-
-    }
+//    public function map($row): array
+//    {
+//        return $row;
+//    }
 }
