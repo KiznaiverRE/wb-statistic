@@ -28,7 +28,6 @@ class ExcelParsingService
             $importedData = $import->getData();
 
             // Получение заголовков
-            Log::info(json_encode($importedData));
             $headings = $importedData[0];
             $newHeaders = [];
             foreach ($headings as $heading) {

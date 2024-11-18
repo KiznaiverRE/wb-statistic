@@ -38,7 +38,6 @@ class BaseImport extends DefaultValueBinder implements WithCustomValueBinder, To
     // Метод для получения данных в виде массива
     public function getData()
     {
-        Log::info('this data:' .json_encode($this->data));
         return $this->data;
     }
 

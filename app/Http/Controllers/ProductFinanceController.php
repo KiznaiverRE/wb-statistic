@@ -211,17 +211,10 @@ class ProductFinanceController extends Controller
 
                         //Штрафы
                         $arr[$article]['reports'][$week]['data']['fines'] = BC::add($arr[$article]['reports'][$week]['data']['fines'], $data['fine'], 2);
-                        if ($article == 71064028){
-                            Log::info($arr[$article]['reports'][$week]['data']['fines']);
-                        }
 
                         //Логистика
                         $arr[$article]['reports'][$week]['data']['logistic'] = BC::add($arr[$article]['reports'][$week]['data']['logistic'], $data['service'], 2);
                     }
-
-//                    if ($article == 71064028){
-//                        Log::info($arr[$article]['reports'][$week]['data']);
-//                    }
                 }
 
 
@@ -350,7 +343,6 @@ class ProductFinanceController extends Controller
     }
 
     public function uploadAds(Request $request){
-        Log::info(000000000000000000);
         try {
         $user = Auth::user();
 
@@ -364,15 +356,11 @@ class ProductFinanceController extends Controller
         $missingHeaders = $this->headerValidator->validateHeaders($data['headers'], 'ads');
 
         if ($missingHeaders !== true){
-            Log::info('$missingHeaders controller: '. json_encode($missingHeaders));
             return response()->json(['error', 'Failed to process the spreadsheet filesssss.'], 500);
         }
 
 
-
         $finData = $request->input('newRows');
-
-        Log::info(11111111111111111111);
 
         // Проверяем, есть ли newRows и является ли он валидным JSON
         if (!empty($finData)) {
@@ -385,7 +373,6 @@ class ProductFinanceController extends Controller
         } else {
             $newRows = [];
         }
-            Log::info(2222222222222222);
 
         foreach ($newRows as $index => $item) {
             $article = $item['meta']['wb_article'];
@@ -422,7 +409,6 @@ class ProductFinanceController extends Controller
                 }
             }
         }
-            Log::info(33333333333333333);
         foreach ($newRows as $key => $item) {
             foreach ($item['reports'] as $k => $v) {
                 if ($v['data']['storage'] == 0) {
@@ -454,7 +440,6 @@ class ProductFinanceController extends Controller
                 }
             }
         }
-            Log::info(4444444444444444);
         // Создаем новый массив с ключами-артикулами
         $newRowsWithArticleKeys = [];
         foreach ($newRows as $item) {
@@ -599,7 +584,6 @@ class ProductFinanceController extends Controller
 
         $data = $query->paginate(30, ['*'], 'page', $page);
 
-//        Log::info($data);
 
         return response()->json([
             'data' => $data,
