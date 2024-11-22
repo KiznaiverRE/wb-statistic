@@ -20,6 +20,9 @@ class ExcelParsingService
         ];
 
         if (in_array($extension, ['xlsx', 'xls', 'csv'])) {
+            ini_set('max_execution_time', 300); // Увеличиваем до 5 минут
+            ini_set('memory_limit', '512M'); // Увеличиваем лимит памяти
+
             $import = new BaseImport;
             Excel::import($import, $file);
 

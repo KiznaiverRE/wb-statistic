@@ -16,6 +16,7 @@ use App\Services\DateFormatService;
 use App\Services\Excel\ExcelHeaderValidatorService;
 use App\Services\Excel\ExcelParsingService;
 use App\Services\Report\FinalReportService;
+use App\Support\MathHelper;
 use Carbon\Carbon;
 use DateTime;
 use Illuminate\Http\Request;
@@ -230,8 +231,24 @@ class ProductFinanceController extends Controller
                         $arr[$article]['reports'][$week]['data']['logisticPercent'] = 0;
                         $arr[$article]['reports'][$week]['data']['averageCheck'] = 0;
                     } else {
+                        if ($weekData['data']['logistic'] <= 0){
+                            Log::info('Logistic: '.$weekData['data']['logistic'] . '|' . 'article: ' . $article);
+                        }
+                        if ($transfers <= 0){
+                            Log::info('$transfers: '.$transfers . '|' . 'article: ' . $article);
+                        }
+
+                        Log::info('========================================');
+                        Log::info('article: ' . $article);
+                        Log::info('logistic: '.$weekData['data']['logistic']);
+                        Log::info('$transfers: '.$transfers);
+                        Log::info('$transfers\100: '.BC::div($transfers, 100, 2));
+                        Log::info('========================================');
+
                         $arr[$article]['reports'][$week]['data']['logisticPercent'] =
-                            BC::div($weekData['data']['logistic'], BC::div($transfers, 100, 2), 2);
+                            MathHelper::saveDiv($weekData['data']['logistic'], MathHelper::saveDiv($transfers, 100));
+
+//                            BC::div($weekData['data']['logistic'], BC::div($transfers, 100, 2), 2);
                         if ($weekData['data']['ordersCount'] > 0){
                             $arr[$article]['reports'][$week]['data']['averageCheck'] = BC::div($transfers, $weekData['data']['ordersCount'], 2);
                         }else{
