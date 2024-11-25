@@ -188,7 +188,9 @@ class ProductFinanceController extends Controller
                         if ($data['return'] === 'Продажа' || strpos($data['return'], 'Корректная')) {
                             $arr[$article]['reports'][$week]['data']['ordersCount'] += 1;
                             $arr[$article]['reports'][$week]['data']['logistic'] = number_format($arr[$article]['reports'][$week]['data']['logistic'], 2, '.');
+                        }
 
+                        if ($data['return'] === 'Продажа' || strpos($data['return'], 'Корректная') || $data['return'] === 'Корректировка эквайринга' || $data['return'] === 'Коррекция продаж'){
                             $arr[$article]['reports'][$week]['data']['transfers'] = BC::add(
                                 $arr[$article]['reports'][$week]['data']['transfers'],
                                 $data['transfer'],
@@ -238,15 +240,16 @@ class ProductFinanceController extends Controller
                             Log::info('$transfers: '.$transfers . '|' . 'article: ' . $article);
                         }
 
-                        Log::info('========================================');
-                        Log::info('article: ' . $article);
-                        Log::info('logistic: '.$weekData['data']['logistic']);
-                        Log::info('$transfers: '.$transfers);
-                        Log::info('$transfers\100: '.BC::div($transfers, 100, 2));
-                        Log::info('========================================');
+//                        Log::info('========================================');
+//                        Log::info('article: ' . $article);
+//                        Log::info('logistic: '.$weekData['data']['logistic']);
+//                        Log::info('$transfers: '.$transfers);
+//                        Log::info('$transfers\100: '.BC::div($transfers, 100, 10));
+//                        Log::info('logistic($transfers\100): '.BC::div($weekData['data']['logistic'], BC::div($transfers, 100, 10)));
+//                        Log::info('========================================');
 
                         $arr[$article]['reports'][$week]['data']['logisticPercent'] =
-                            MathHelper::saveDiv($weekData['data']['logistic'], MathHelper::saveDiv($transfers, 100));
+                            BC::div($weekData['data']['logistic'], BC::div($transfers, 100, 10), 2);
 
 //                            BC::div($weekData['data']['logistic'], BC::div($transfers, 100, 2), 2);
                         if ($weekData['data']['ordersCount'] > 0){
@@ -254,6 +257,8 @@ class ProductFinanceController extends Controller
                         }else{
                             $arr[$article]['reports'][$week]['data']['averageCheck'] = 0;
                         }
+
+                        Log::info('logisticPercent: '.$arr[$article]['reports'][$week]['data']['logisticPercent']);
                     }
 
                     //Себестоимость партии
@@ -286,8 +291,9 @@ class ProductFinanceController extends Controller
                     if ($profit <= 0){
                         $arr[$article]['reports'][$week]['data']['profitPercent'] = 0;
                     }else{
+//                        Log::info($transfers . '$transfers\100 = ' . BC::div($transfers, 100, 2));
                         $arr[$article]['reports'][$week]['data']['profitPercent'] =
-                            BC::div($profit, (BC::div($transfers, 100, 2)), 2);
+                            BC::div($profit, (BC::div($transfers, 100, 10)));
                     }
 
 
