@@ -103,13 +103,13 @@ class FinalReportService
         if ($finances->logistic_cost != 0 && $finances->transfers != 0) {
             $finances->logistic_percent =
                 $this->bc::div($finances->logistic_cost,
-                    ($this->bc::div($finances->transfers, 100, 2)), 2);
+                    ($this->bc::div($finances->transfers, 100, 10)), 2);
         }
 
         if ($finances->transfers != 0 && $finances->profit != 0) {
             $finances->profit_percent =
                 $this->bc::div($finances->profit,
-                    ($this->bc::div($finances->transfers, 100, 2)), 2);
+                    ($this->bc::div($finances->transfers, 100, 10)), 2);
         }
 
         return $finances;
