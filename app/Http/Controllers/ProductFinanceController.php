@@ -446,14 +446,14 @@ class ProductFinanceController extends Controller
                 if ($v['data']['profit'] <= 0) {
                     $newRows[$key]['reports'][$k]['data']['profitPercent'] = 0;
                 } else {
-                    $newRows[$key]['reports'][$k]['data']['profitPercent'] = BC::div($newRows[$key]['reports'][$k]['data']['profit'], (BC::div($newRows[$key]['reports'][$k]['data']['transfers'], 100, 2)), 2);
+                    $newRows[$key]['reports'][$k]['data']['profitPercent'] = BC::div($newRows[$key]['reports'][$k]['data']['profit'], (BC::div($newRows[$key]['reports'][$k]['data']['transfers'], 100, 10)), 2);
                 }
 
                 if ($newRows[$key]['reports'][$k]['data']['creditedToAccount'] - $newRows[$key]['reports'][$k]['data']['batchCost'] <= 0) {
                     $newRows[$key]['reports'][$k]['data']['margin'] = 0;
                 } else {
                     $numerator = $newRows[$key]['reports'][$k]['data']['creditedToAccount'] - $newRows[$key]['reports'][$k]['data']['batchCost'];
-                    $denominator = BC::mul($newRows[$key]['reports'][$k]['data']['batchCost'], 100, 2);
+                    $denominator = BC::mul($newRows[$key]['reports'][$k]['data']['batchCost'], 100, 10);
 
                     if ($numerator != 0 && $newRows[$key]['reports'][$k]['data']['batchCost'] != 0) {
                         $newRows[$key]['reports'][$k]['data']['margin'] = BC::mul(BC::div($numerator, $newRows[$key]['reports'][$k]['data']['batchCost'], 10), 100, 2);
@@ -566,13 +566,13 @@ class ProductFinanceController extends Controller
                 if ($v['data']['profit'] <= 0) {
                     $newRows[$key]['reports'][$k]['data']['profitPercent'] = 0;
                 } else {
-                    $newRows[$key]['reports'][$k]['data']['profitPercent'] = BC::div($newRows[$key]['reports'][$k]['data']['profit'], (BC::div($newRows[$key]['reports'][$k]['data']['transfers'], 100, 2)), 2);
+                    $newRows[$key]['reports'][$k]['data']['profitPercent'] = BC::div($newRows[$key]['reports'][$k]['data']['profit'], (BC::div($newRows[$key]['reports'][$k]['data']['transfers'], 100, 10)), 2);
                 }
 
 
 
                     $numerator = $newRows[$key]['reports'][$k]['data']['creditedToAccount'] - $newRows[$key]['reports'][$k]['data']['batchCost'];
-                    $denominator = BC::mul($newRows[$key]['reports'][$k]['data']['batchCost'], 100, 2);
+                    $denominator = BC::mul($newRows[$key]['reports'][$k]['data']['batchCost'], 100, 10);
 
                     if ($numerator != 0 && $newRows[$key]['reports'][$k]['data']['batchCost'] != 0) {
                         $newRows[$key]['reports'][$k]['data']['margin'] = BC::mul(BC::div($numerator, $newRows[$key]['reports'][$k]['data']['batchCost'], 10), 100, 2);
