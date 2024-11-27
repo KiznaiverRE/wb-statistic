@@ -21,21 +21,11 @@ class BaseImport extends DefaultValueBinder implements WithCustomValueBinder, Wi
 //    public $data;
     public array $data = [];
 
-//    public function collection(Collection $collection)
-//    {
-//        $this->data = $collection;
-//    }
 
     public function onRow(Row $row)
     {
         $this->data[] = $row->toArray();
     }
-
-//    public function array(array $array)
-//    {
-//
-//        $this->data = array_merge($this->data, $array);
-//    }
 
     public function chunkSize(): int
     {
@@ -47,9 +37,4 @@ class BaseImport extends DefaultValueBinder implements WithCustomValueBinder, Wi
     {
         return $this->data;
     }
-
-//    public function map($row): array
-//    {
-//        return $row;
-//    }
 }

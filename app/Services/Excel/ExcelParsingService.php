@@ -42,20 +42,12 @@ class ExcelParsingService
                 }
             }
 
-
-
             $newHeaders = self::normalizeRowData($newHeaders);
             $data['headers'] = $newHeaders;
-
-//            Log::info($data['headers']);
-//            $data['headers'] = $newHeaders;
-
 
             // Получение данных
             $rows = $importedData;
             array_shift($rows); // Удаление первой строки, так как это заголовки
-
-//            $newHeaders = self::normalizeRowData($newHeaders);
 
             $data['rows'] = $rows;
 

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 
 
 use App\Exports\BaseExport;
+use App\Jobs\ProcessExcelFile;
 use App\Models\CategoryFinalReport;
 use App\Models\FinancialMetaData;
 use App\Models\FinancialReport;
@@ -50,6 +51,14 @@ class ProductFinanceController extends Controller
             }
 
             $file = $request->file('file');
+            $filePath = $file->store('uploads');
+
+            // Генерируем уникальный хэш для привязки к приватному каналу
+            $fileHash = md5($filePath . $user->id);
+
+            ProcessExcelFile::dispatch($filePath, $user->id, $fileHash);
+
+            return response()->json(['message' => 'File is being processed.', 'fileHash' => $fileHash], 200);
             $data = ExcelParsingService::getDataFromExcel($file);
 
             $missingHeaders = $this->headerValidator->validateHeaders($data['headers'], 'finance');
@@ -60,10 +69,6 @@ class ProductFinanceController extends Controller
 
             $groupedData = [];
             $finances = [];
-
-
-            Log::info('======================================================');
-
 
 
             foreach ($data['rows'] as $key => $row) {

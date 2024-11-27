@@ -182,6 +182,8 @@ import { endOfMonth, endOfYear, startOfMonth, startOfYear, subMonths, startOfWee
 const date = ref();
 import ExcelJS from 'exceljs';
 import interact from 'interactjs';
+import Echo from "laravel-echo";
+import Pusher from "pusher-js";
 import SearchInput from "@/Components/SearchInput.vue";
 import {mapState, mapActions} from 'vuex';
 import DownloadTemplateButton from "@/Components/DownloadTemplateButton.vue";
@@ -226,7 +228,8 @@ export default {
             searchQuery: '',
             message: null,
             dateFilterApplied: false,
-            priceDateRange: null
+            priceDateRange: null,
+            isProcessing: false,  // Добавьте это в data или computed
         };
     },
     computed: {
@@ -267,71 +270,101 @@ export default {
             const formData = new FormData();
             formData.append('file', file);
 
-            // console.log(fileInput)
-            console.log(event.target.files)
             try {
+                // Отправка файла на сервер
                 const response = await axios.post('/upload-excel', formData, {
                     headers: {
                         'Content-Type': 'multipart/form-data'
                     }
                 });
-                let { headers, rows } = response.data;
 
-                this.newRows = rows;
-
-                for (let key in headers) {
-                    if (!this.headers.includes(headers[key])) {
-                        this.headers.push(headers[key]);
-                    }
+                if (response.status !== 200 || !response.data.job_id) {
+                    throw new Error('Ошибка при обработке файла на сервере');
                 }
 
-                this.prices = Object.fromEntries(
-                    Object.entries(this.headers).slice(4)
-                )
+                const { job_id } = response.data; // Получаем `job_id` для отслеживания обработки
+                console.log(`Job ID: ${job_id}`);
 
-                if (Object.keys(this.rows).length > 0){
-                    for (let key in this.rows){
-                        if (this.newRows.hasOwnProperty(key)){
-                            let newRow = this.newRows[key]
-                            let newRowPrices = newRow.prices
+                // Подключение к WebSocket через Laravel Echo
+                this.listenForUpdates(job_id);
 
-                            for (let k in newRowPrices){
-                                this.rows[key].prices[k] = newRowPrices[k]
-                            }
-                        }
-                    }
-                    for (let key in this.newRows){
-                        if (!this.rows.hasOwnProperty(key)){
-                            let newRow = this.newRows[key]
-                            this.rows[key] = newRow;
-                            // this.rows.push(newRow)
-                        }
-                    }
-                }else{
-                    this.rows = this.newRows
-                }
-
-                for (let key in this.rows){
-                    for (let k in this.prices){
-                        if (!this.rows[key].prices.hasOwnProperty(this.prices[k])){
-                            this.rows[key].prices[this.prices[k]] = Object.values(this.rows[key].prices)[Object.keys(this.rows[key].prices).length-1]
-                        }
-                    }
-
-                    // new Promise()
-                    this.rows[key].prices = this.sortPrices(this.rows[key].prices, true, 'keys');
-                    this.setLastPositivePrice(this.rows[key].prices)
-
-                }
-
-                this.headers = this.sortPrices(this.headers, false, 'values');
                 const fileInput = event.target;
                 fileInput.value = ''; // сбрасываем значение
 
+                this.isProcessing = true;
             } catch (error) {
-                this.setErrorMessage('Неверный формат файла, используйте шаблон для загрузки файлов');
+                this.setErrorMessage('Ошибка загрузки файла. Проверьте его формат.');
                 console.error('Error uploading file:', error);
             }
+        },
+
+        listenForUpdates(jobId) {
+            window.Echo.channel(`excel-processing.${jobId}`) // Канал для конкретной задачи
+                .listen('.ExcelProcessed', (data) => {
+                    console.log('Received WebSocket update:', data);
+
+                    // Проверка на наличие данных
+                    if (!data || !data.headers || !data.rows) {
+                        this.setErrorMessage('Получены некорректные данные от сервера.');
+                        return;
+                    }
+
+                    // Обновление таблицы после обработки
+                    const { headers, rows } = data;
+                    this.newRows = rows;
+
+
+
+                    // Логика для обновления данных, как в оригинальном коде
+                    for (let key in headers) {
+                        if (!this.headers.includes(headers[key])) {
+                            this.headers.push(headers[key]);
+                        }
+                    }
+
+                    this.prices = Object.fromEntries(
+                        Object.entries(this.headers).slice(4)
+                    );
+
+                    if (Object.keys(this.rows).length > 0) {
+                        for (let key in this.rows) {
+                            if (this.newRows.hasOwnProperty(key)) {
+                                let newRow = this.newRows[key];
+                                let newRowPrices = newRow.prices;
+
+                                for (let k in newRowPrices) {
+                                    this.rows[key].prices[k] = newRowPrices[k];
+                                }
+                            }
+                        }
+                        for (let key in this.newRows) {
+                            if (!this.rows.hasOwnProperty(key)) {
+                                let newRow = this.newRows[key];
+                                this.rows[key] = newRow;
+                            }
+                        }
+                    } else {
+                        this.rows = this.newRows;
+                    }
+
+                    for (let key in this.rows) {
+                        for (let k in this.prices) {
+                            if (!this.rows[key].prices.hasOwnProperty(this.prices[k])) {
+                                this.rows[key].prices[this.prices[k]] = Object.values(this.rows[key].prices)[Object.keys(this.rows[key].prices).length - 1];
+                            }
+                        }
+
+                        this.rows[key].prices = this.sortPrices(this.rows[key].prices, true, 'keys');
+                        this.setLastPositivePrice(this.rows[key].prices);
+                    }
+
+                    this.headers = this.sortPrices(this.headers, false, 'values');
+                })
+                .error((error) => {
+                    console.error('WebSocket error:', error);
+                    this.setErrorMessage('Ошибка при получении данных через WebSocket. Попробуйте снова.');
+                    this.isProcessing = false;  // Можно также установить флаг завершения обработки
+                });
         },
         sortPrices(prices = null, keys = false, type){
             const method = `Object.${type}`

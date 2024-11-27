@@ -23,7 +23,7 @@ return new class extends Migration
             $table->decimal('average_check', 10, 2);
             $table->decimal('purchase_cost', 10, 2);
             $table->decimal('logistic_cost', 10, 2);
-            $table->decimal('logistic_percent', 5, 2);
+            $table->decimal('logistic_percent', 10, 2);
             $table->decimal('storage_cost', 10, 2);
             $table->decimal('advertising_cost', 10, 2);
             $table->decimal('ddr_percent', 5, 2);
