@@ -9,23 +9,31 @@ use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Log;
 
-class ExcelProcessed
+class ExcelProcessed implements ShouldBroadcast
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
-    public array $data;
-    public string $filePathHash;
+//    public $data;
+    public string $fileHash;
 
     /**
      * Create a new event instance.
      *
      * @return void
      */
-    public function __construct(array $data, string $filePathHash)
+    public function __construct(string $fileHash)
     {
-        $this->data = $data;
-        $this->filePathHash = $filePathHash;
+        Log::info('=============ExcelProcessed | __construct==================================');
+        Log::info('fileHash: '.$fileHash);
+//        $this->data = $data;
+        $this->fileHash = $fileHash;
+    }
+
+    public function broadcastAs()
+    {
+        return 'ExcelProcessed';
     }
 
     /**
@@ -35,13 +43,15 @@ class ExcelProcessed
      */
     public function broadcastOn()
     {
-        return new PrivateChannel('excel-processed.' . $this->filePathHash);
+        Log::info('=============ExcelProcessed | broadcastOn==================================');
+        return new Channel("excel-processed.{$this->fileHash}");
     }
 
     public function broadcastWith()
     {
+        Log::info('=============ExcelProcessed | broadcastWith==================================');
         return [
-            'data' => $this->data,
+            'data' => $this->fileHash,
         ];
     }
 }

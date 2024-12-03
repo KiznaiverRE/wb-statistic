@@ -11,8 +11,8 @@ use PhpOffice\PhpSpreadsheet\Shared\Date as Date;
 
 class ExcelParsingService
 {
-    public static function getDataFromExcel($file){
-        $extension = $file->getClientOriginalExtension();
+    public static function getDataFromExcel(string $filePath){
+        $extension = pathinfo($filePath, PATHINFO_EXTENSION);
 
         $data = [
             'headers' => [],
@@ -24,7 +24,7 @@ class ExcelParsingService
             ini_set('memory_limit', '512M'); // Увеличиваем лимит памяти
 
             $import = new BaseImport;
-            Excel::import($import, $file);
+            Excel::import($import, $filePath);
 
 //            Log::info(json_encode($import));
 

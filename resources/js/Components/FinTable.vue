@@ -282,6 +282,8 @@ import SearchInput from "@/Components/SearchInput.vue";
 import DownloadTemplateButton from "@/Components/DownloadTemplateButton.vue";
 import {mapState, mapActions} from 'vuex';
 import {endOfMonth, endOfWeek, endOfYear, startOfMonth, startOfWeek, startOfYear, subMonths} from "date-fns";
+import Echo from "laravel-echo";
+import Pusher from "pusher-js";
     export default {
         name: "FinTable",
         components: {
@@ -323,7 +325,8 @@ import {endOfMonth, endOfWeek, endOfYear, startOfMonth, startOfWeek, startOfYear
                 editedCost: null,
                 loading: false,
                 searchQuery: '',
-                message: null
+                message: null,
+                isProcessing: false,  // Добавьте это в data или computed
             };
         },
         computed: {
@@ -355,7 +358,7 @@ import {endOfMonth, endOfWeek, endOfYear, startOfMonth, startOfWeek, startOfYear
         },
         methods: {
             ...mapActions('error', ['setErrorMessage', 'clearErrorMessage']),
-            async handleFileUpload(event, url) {
+            async handleFileUpload(event, url, callback) {
                 const file = event.target.files[0];
                 const formData = new FormData();
                 formData.append('file', file);
@@ -375,9 +378,23 @@ import {endOfMonth, endOfWeek, endOfYear, startOfMonth, startOfWeek, startOfYear
                         }
                     });
 
-                    if (response.data) {
-                        return response.data;
+
+                    // Проверяем, что сервер вернул fileHash
+                    if (response.status !== 200 || !response.data.fileHash) {
+                        throw new Error('Ошибка при обработке файла на сервере');
                     }
+
+                    const { fileHash } = response.data; // Получаем fileHash
+                    console.log(`File Hash: ${fileHash}`);
+
+                    this.isProcessing = true;
+
+                    // Подключение к WebSocket через Laravel Echo
+                    this.listenForUpdates(fileHash, callback);
+
+                    // if (response.data) {
+                    //     return response.data;
+                    // }
 
                 } catch (error) {
                     console.error('Error uploading file:', error);
@@ -403,25 +420,68 @@ import {endOfMonth, endOfWeek, endOfYear, startOfMonth, startOfWeek, startOfYear
                     throw error;
                 } finally {
                     this.loading = false; // Выключаем индикатор загрузки
+                    this.isProcessing = false;  // Можно также установить флаг завершения обработки
                 }
             },
-            uploadFile(rows = null, event, url, callback){
-                try {
-                    const data = this.handleFileUpload(event, url)
-                        .then(data => {
-                            if (callback){
-                                callback(data)
+            listenForUpdates(fileHash, callback) {
+                window.Echo.channel(`excel-processed.${fileHash}`)
+                    .listen('.ExcelProcessed', rawData => {
+                        console.log('Received WebSocket update:', rawData);
+                        console.log('fileHash:', fileHash);
+
+                        try {
+                            const fileHash = rawData.data; // Сразу используйте rawData без JSON.parse
+
+                            if (!fileHash) {
+                                console.log(fileHash)
+                                this.setErrorMessage('Некорректные данные от сервера.');
+                                return;
                             }
-                        });
-                } catch (error) {
-                    console.error(`Error in uploadFile for URL ${url}:`, error)
-                }
+
+                            // Теперь выполняем API-запрос для получения полных данных
+                            fetch(`/api/excel-data/${fileHash}`)
+                                .then(response => response.json())
+                                .then(data => {
+                                    console.log(data)
+                                    if (data.message) {
+                                        this.setErrorMessage(data.message);
+                                        return;
+                                    }
+
+                                    // Проверьте, что данные корректны
+                                    // if (!data.headers || !data.rows) {
+                                    //     this.setErrorMessage('Получены некорректные данные от сервера.');
+                                    //     return;
+                                    // }
+
+                                    // Передаем данные в callback
+                                    if (callback) {
+                                        callback(data);
+                                    }
+                                })
+                                .catch(error => {
+                                    console.error('Ошибка при получении данных:', error);
+                                    this.setErrorMessage('Ошибка получения данных с сервера.');
+                                });
+                        } catch (error) {
+                            console.error('Ошибка при обработке данных:', error);
+                            this.setErrorMessage('Ошибка обработки данных от сервера.');
+                        }
+                    });
+            },
+            uploadFile(event, url, callback) {
+                this.handleFileUpload(event, url, callback)
+                    .catch((error) => {
+                        console.error(`Ошибка при загрузке файла на URL ${url}:`, error);
+                    });
             },
             uploadFinFile(event){
                 const url = '/upload-fin';
 
-                this.uploadFile(null, event, url, (data) => {
+
+                this.uploadFile(event, url, (data) => {
                     if (data) {
+                        console.log(data)
                         const rows = data;
 
                         // Преобразование объекта rows в массив
@@ -436,7 +496,7 @@ import {endOfMonth, endOfWeek, endOfYear, startOfMonth, startOfWeek, startOfYear
                 try {
                     const url = '/upload-ads';
 
-                    this.uploadFile(this.newRows, event, url, (data) => {
+                    this.uploadFile(event, url, (data) => {
                         if (data) {
                             const rows = data.data;
 
@@ -457,7 +517,7 @@ import {endOfMonth, endOfWeek, endOfYear, startOfMonth, startOfWeek, startOfYear
                 try {
                     const url = '/upload-storage';
 
-                    this.uploadFile(this.newRows, event, url, (data) => {
+                    this.uploadFile(event, url, (data) => {
                         if (data) {
                             const rows = data.data;
 

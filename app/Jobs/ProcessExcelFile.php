@@ -9,6 +9,7 @@ use App\Models\ProductCategory;
 use App\Services\Excel\ExcelHeaderValidatorService;
 use App\Services\Excel\ExcelParsingService;
 use BCMathExtended\BC;
+use DateTime;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -16,6 +17,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Redis;
 
 class ProcessExcelFile implements ShouldQueue
 {
@@ -24,6 +26,7 @@ class ProcessExcelFile implements ShouldQueue
     protected string $filePath;
     protected $userId;
     protected $fileHash;
+    public $timeout = 220;
 
     /**
      * Create a new job instance.
@@ -45,37 +48,41 @@ class ProcessExcelFile implements ShouldQueue
     public function handle()
     {
         try {
+            Log::info('=== Начало обработки файла ===');
             $parsedData = ExcelParsingService::getDataFromExcel(storage_path('app/' . $this->filePath));
 
             $processedData = $this->processData($parsedData);
 
             $headerValidator = app(ExcelHeaderValidatorService::class);
-            $missingHeaders = $headerValidator->validateHeaders($processedData['headers'], 'finance');
+            $missingHeaders = $headerValidator->validateHeaders($parsedData['headers'], 'finance');
 
             if ($missingHeaders !== true) {
                 Log::error('Missing headers in the file', [
                     'missing_headers' => $missingHeaders,
                     'file_hash' => $this->fileHash,
                 ]);
-                return;
+//                return;
             }
-
-            broadcast(new ExcelProcessed($processedData, $this->fileHash));
-
-            // Отправляем событие
-//            event(new ExcelProcessed($data, $filePathHash));
+//            Log::info(json_encode($processedData));
+            Redis::set("excel_data:{$this->fileHash}", json_encode($processedData));
+            Log::info(Redis::get("excel_data:{$this->fileHash}"));
+            Log::info('=== Задача успешно завершена ===');
         } catch (\Exception $e) {
             Log::error('Error in ProcessExcelFile job: ' . $e->getMessage(), [
                 'file' => $e->getFile(),
                 'line' => $e->getLine(),
             ]);
+            throw $e;
+        } finally {
+            Log::info('Event broadcasting. Hash: '.$this->fileHash);
+            broadcast(new ExcelProcessed($this->fileHash));
+            Log::info('Event broadcasted successfully.');
         }
     }
 
     private function processData($data){
         $groupedData = [];
         $finances = [];
-
 
         foreach ($data['rows'] as $key => $row) {
             $item = $row['Артикул поставщика'];
@@ -240,12 +247,12 @@ class ProcessExcelFile implements ShouldQueue
                     $arr[$article]['reports'][$week]['data']['logisticPercent'] = 0;
                     $arr[$article]['reports'][$week]['data']['averageCheck'] = 0;
                 } else {
-                    if ($weekData['data']['logistic'] <= 0){
-                        Log::info('Logistic: '.$weekData['data']['logistic'] . '|' . 'article: ' . $article);
-                    }
-                    if ($transfers <= 0){
-                        Log::info('$transfers: '.$transfers . '|' . 'article: ' . $article);
-                    }
+//                    if ($weekData['data']['logistic'] <= 0){
+//                        Log::info('Logistic: '.$weekData['data']['logistic'] . '|' . 'article: ' . $article);
+//                    }
+//                    if ($transfers <= 0){
+//                        Log::info('$transfers: '.$transfers . '|' . 'article: ' . $article);
+//                    }
 
 //                        Log::info('========================================');
 //                        Log::info('article: ' . $article);
@@ -265,7 +272,7 @@ class ProcessExcelFile implements ShouldQueue
                         $arr[$article]['reports'][$week]['data']['averageCheck'] = 0;
                     }
 
-                    Log::info('logisticPercent: '.$arr[$article]['reports'][$week]['data']['logisticPercent']);
+//                    Log::info('logisticPercent: '.$arr[$article]['reports'][$week]['data']['logisticPercent']);
                 }
 
                 //Себестоимость партии
@@ -323,5 +330,62 @@ class ProcessExcelFile implements ShouldQueue
         }
 
         return $arr;
+    }
+
+
+    private function getWeekRange($dateOrNumber) {
+        try {
+            $unixTimestamp = null;
+
+            $parts = explode(' ', $dateOrNumber);
+
+            $dateOrNumber = $parts[0];
+
+            if (is_numeric($dateOrNumber)) {
+                $unixTimestamp = $this->convertExcelDateToUnixTimestamp($dateOrNumber);
+            } else {
+                $dateFormats = ['d.m.Y', 'Y-m-d'];
+                foreach ($dateFormats as $format) {
+                    if ($this->isValidDate($dateOrNumber, $format)) {
+                        $unixTimestamp = strtotime($dateOrNumber);
+                        if ($unixTimestamp === false) {
+                            throw new \Exception("Invalid date format: $dateOrNumber");
+                        }
+                        break;
+                    }
+                }
+                if ($unixTimestamp === null) {
+                    throw new \Exception("Invalid date format: $dateOrNumber");
+                }
+            }
+
+            $date = date('d.m.Y', $unixTimestamp);
+
+            $dateTime = new DateTime($date);
+            $dayOfWeek = $dateTime->format('N');
+            $startOfWeek = clone $dateTime;
+            $startOfWeek->modify('-' . ($dayOfWeek - 1) . ' days');
+            $endOfWeek = clone $startOfWeek;
+            $endOfWeek->modify('+6 days');
+
+            $startDate = $startOfWeek->format('d.m.Y');
+            $endDate = $endOfWeek->format('d.m.Y');
+
+            return [$startDate, $endDate];
+        }catch (\Exception $e){
+            // Логирование ошибки или вывод сообщения об ошибке
+            error_log($e->getMessage());
+            // Возврат значения по умолчанию или null, если это допустимо
+            return null;
+        }
+
+    }
+    private function isValidDate($date, $format = 'd.m.Y') {
+        $dateTime = DateTime::createFromFormat($format, $date);
+        return $dateTime && $dateTime->format($format) === $date;
+    }
+
+    private function convertExcelDateToUnixTimestamp($excelDate) {
+        return ((int)$excelDate - 25569) * 86400;
     }
 }

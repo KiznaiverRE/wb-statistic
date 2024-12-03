@@ -56,6 +56,7 @@ class ProductFinanceController extends Controller
             // Генерируем уникальный хэш для привязки к приватному каналу
             $fileHash = md5($filePath . $user->id);
 
+
             ProcessExcelFile::dispatch($filePath, $user->id, $fileHash);
 
             return response()->json(['message' => 'File is being processed.', 'fileHash' => $fileHash], 200);
@@ -238,12 +239,6 @@ class ProductFinanceController extends Controller
                         $arr[$article]['reports'][$week]['data']['logisticPercent'] = 0;
                         $arr[$article]['reports'][$week]['data']['averageCheck'] = 0;
                     } else {
-                        if ($weekData['data']['logistic'] <= 0){
-                            Log::info('Logistic: '.$weekData['data']['logistic'] . '|' . 'article: ' . $article);
-                        }
-                        if ($transfers <= 0){
-                            Log::info('$transfers: '.$transfers . '|' . 'article: ' . $article);
-                        }
 
 //                        Log::info('========================================');
 //                        Log::info('article: ' . $article);
@@ -262,8 +257,6 @@ class ProductFinanceController extends Controller
                         }else{
                             $arr[$article]['reports'][$week]['data']['averageCheck'] = 0;
                         }
-
-                        Log::info('logisticPercent: '.$arr[$article]['reports'][$week]['data']['logisticPercent']);
                     }
 
                     //Себестоимость партии
