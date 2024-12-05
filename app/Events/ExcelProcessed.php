@@ -26,7 +26,6 @@ class ExcelProcessed implements ShouldBroadcast
     public function __construct(string $fileHash)
     {
         Log::info('=============ExcelProcessed | __construct==================================');
-        Log::info('fileHash: '.$fileHash);
 //        $this->data = $data;
         $this->fileHash = $fileHash;
     }

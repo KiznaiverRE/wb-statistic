@@ -57,7 +57,7 @@ class ProductFinanceController extends Controller
             $fileHash = md5($filePath . $user->id);
 
 
-            ProcessExcelFile::dispatch($filePath, $user->id, $fileHash);
+            ProcessExcelFile::dispatch($filePath, $user->id, $fileHash, 'finance');
 
             return response()->json(['message' => 'File is being processed.', 'fileHash' => $fileHash], 200);
             $data = ExcelParsingService::getDataFromExcel($file);
@@ -372,6 +372,20 @@ class ProductFinanceController extends Controller
         }
 
         $file = $request->file('file');
+        $filePath = $file->store('uploads');
+
+        // Генерируем уникальный хэш для привязки к приватному каналу
+        $fileHash = md5($filePath . $user->id);
+
+        ProcessExcelFile::dispatch($filePath, $user->id, $fileHash, 'ads', json_decode($request->input('newRows'), true));
+
+        return response()->json(['message' => 'File is being processed.', 'fileHash' => $fileHash], 200);
+
+
+
+
+
+
         $data = ExcelParsingService::getDataFromExcel($file);
 
         $missingHeaders = $this->headerValidator->validateHeaders($data['headers'], 'ads');
@@ -482,6 +496,28 @@ class ProductFinanceController extends Controller
     }
 
     public function uploadStorage(Request $request){
+        $user = Auth::user();
+
+        if (!$request->hasFile('file')) {
+            return response()->json(['error' => 'No file uploaded'], 400);
+        }
+
+        $file = $request->file('file');
+        $filePath = $file->store('uploads');
+
+        // Генерируем уникальный хэш для привязки к приватному каналу
+        $fileHash = md5($filePath . $user->id);
+
+        ProcessExcelFile::dispatch($filePath, $user->id, $fileHash, 'storage', json_decode($request->input('newRows'), true));
+
+        return response()->json(['message' => 'File is being processed.', 'fileHash' => $fileHash], 200);
+
+
+
+
+
+
+
         $user = Auth::user();
 
         if (!$request->hasFile('file')) {

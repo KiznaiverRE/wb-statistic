@@ -442,11 +442,12 @@ import Pusher from "pusher-js";
                             fetch(`/api/excel-data/${fileHash}`)
                                 .then(response => response.json())
                                 .then(data => {
-                                    console.log(data)
-                                    if (data.message) {
-                                        this.setErrorMessage(data.message);
-                                        return;
-                                    }
+                                    console.log('data: '+data)
+                                    console.log('callback: '+callback)
+                                    // if (data.message) {
+                                    //     this.setErrorMessage(data.message);
+                                    //     return;
+                                    // }
 
                                     // Проверьте, что данные корректны
                                     // if (!data.headers || !data.rows) {
@@ -498,7 +499,8 @@ import Pusher from "pusher-js";
 
                     this.uploadFile(event, url, (data) => {
                         if (data) {
-                            const rows = data.data;
+                            console.log(data)
+                            const rows = data;
 
                             // Очищаем массив newRows перед добавлением новых данных
                             this.newRows = [];
@@ -519,7 +521,7 @@ import Pusher from "pusher-js";
 
                     this.uploadFile(event, url, (data) => {
                         if (data) {
-                            const rows = data.data;
+                            const rows = data;
 
                             // Очищаем массив newRows перед добавлением новых данных
                             this.newRows = [];
