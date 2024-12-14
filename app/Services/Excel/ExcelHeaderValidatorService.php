@@ -43,7 +43,7 @@ class ExcelHeaderValidatorService
 
         $missingHeaders = array_diff($templateHeaders, $formattedHeaders);
 
-        Log::info('$missingHeaders: '. json_encode($missingHeaders));
+        Log::info('$missingHeaders: '. json_encode($missingHeaders, JSON_UNESCAPED_UNICODE));
 
         return empty($missingHeaders) ? true : $missingHeaders;
     }

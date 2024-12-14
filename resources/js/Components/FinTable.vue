@@ -521,6 +521,7 @@ import Pusher from "pusher-js";
 
                     this.uploadFile(event, url, (data) => {
                         if (data) {
+                            console.log(data)
                             const rows = data;
 
                             // Очищаем массив newRows перед добавлением новых данных

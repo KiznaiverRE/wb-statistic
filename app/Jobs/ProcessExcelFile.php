@@ -354,6 +354,8 @@ class ProcessExcelFile implements ShouldQueue
 //                $newRows = [];
 //            }
 
+//        Log::info(json_encode($newRows));
+
             foreach ($newRows as $index => $item) {
                 $article = $item['meta']['wb_article'];
 
@@ -372,7 +374,8 @@ class ProcessExcelFile implements ShouldQueue
 
 
 
-                    if ($item['meta']['wb_article'] == $value['арт']) {
+                    if ((int)$item['meta']['wb_article'] == (int)$value['арт']) {
+
 //                    if (!isset($item['reports'][$week])) {
 //                        $item['reports'][$week] = [];
 //                    }
@@ -427,8 +430,8 @@ class ProcessExcelFile implements ShouldQueue
                 $newRowsWithArticleKeys[$article] = $item;
             }
 
-            Log::info($newRows);
-            Log::info($newRowsWithArticleKeys);
+//            Log::info($newRows);
+//            Log::info($newRowsWithArticleKeys);
 
             return $newRowsWithArticleKeys;
     }
@@ -447,43 +450,69 @@ class ProcessExcelFile implements ShouldQueue
 //        }
 
 //        return response()->json(['newRows' => $newRows], 200);
+//        Log::info('1111++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++=');
+//        Log::info($newRows);
+//        Log::info('==================================================================================================================================================================================================================');
 
         foreach ($newRows as $index => $item) {
             $article = $item['meta']['article'];
 
             foreach ($data['rows'] as $key => $value) {
-//                $unixTimestamp = ((int)$value['Дата'] - 25569) * 86400;
-//                $date = date('d.m.Y', $unixTimestamp);
                 list($startDate, $endDate) = $this->getWeekRange($value['Дата']);
                 $week = "$startDate-$endDate";
 
-                if ($item['meta']['article'] == $value['Артикул продавца']) {
-                    if (!isset($item['reports'][$week])) {
-                        $item['reports'][$week] = [];
-                    }
-                    if (!isset($item['reports'][$week]['data'])) {
-                        $item['reports'][$week]['data'] = [];
-                    }
-
-                    if (!isset($item['reports'][$week]['data']['storage'])){
-                        $item['reports'][$week]['data']['storage'] = 0;
-                    }
-
-
-                    $item['reports'][$week]['data']['storage'] = BC::add($item['reports'][$week]['data']['storage'], $value['Сумма хранения, руб'], 2);
-
-                    // Обновляем элемент в $newRows
-                    $newRows[$index] = $item;
-
+                Log::info('$article - '.$article);
+                Log::info('Артикул продавца - '.$value['Артикул продавца']);
+                Log::info($week);
+//                Log::info($item['reports'][$week]);
+                if (array_key_exists($week, $item['reports'])) {
+                    Log::info('Ключ существует!');
                 }
+
+
+                if (array_key_exists($week, $item['reports'])) {
+                    Log::info(11111111);
+                    if ((int)$article == (int)$value['Артикул продавца'] || (int)$item['meta']['wb_article'] == (int)$value['Артикул продавца']) {
+                        Log::info(222222);
+//                        if (!isset($item['reports'][$week])) {
+//                            $item['reports'][$week] = [];
+//                        }
+//                        if (!isset($item['reports'][$week]['data'])) {
+//                            $item['reports'][$week]['data'] = [];
+//                        }
+//
+//                        if (!isset($item['reports'][$week]['data']['storage'])){
+//                            $item['reports'][$week]['data']['storage'] = 0;
+//                        }
+
+
+                        $item['reports'][$week]['data']['storage'] = BC::add($item['reports'][$week]['data']['storage'], $value['Сумма хранения, руб'], 2);
+                        Log::info('START-BC::add($item[storage]: '.$item['reports'][$week]['data']['storage']);
+                        Log::info('BC::add($value[Сумма хранения, руб]: '.$value['Сумма хранения, руб']);
+                        Log::info('END-BC::add($item[storage]: '.$item['reports'][$week]['data']['storage']);
+
+                        // Обновляем элемент в $newRows
+                        $newRows[$index] = $item;
+
+                    }
+
+                    if (!isset($newRows[$index]['reports'][$week]['data']['creditedToAccount'])){
+                        $newRows[$index]['reports'][$week]['data']['creditedToAccount'] = 0;
+                    }
+                }
+
             }
 
-            if (!isset($newRows[$index]['reports'][$week]['data']['creditedToAccount'])){
-                $newRows[$index]['reports'][$week]['data']['creditedToAccount'] = 0;
-            }
+
         }
 
+
+//        Log::info('222++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++=');
+//        Log::info($newRows);
+//        Log::info('==================================================================================================================================================================================================================');
+
         // Создаем новый массив с ключами-артикулами
+
         foreach ($newRows as $key => $item) {
             foreach ($item['reports'] as $k => $v) {
                 if ($v['data']['ads'] == 0) {
